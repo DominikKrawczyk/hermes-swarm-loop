@@ -75,6 +75,14 @@ After each phase completes, skill_manage('patch') is called to update SKILL.md w
 - **Cycle 2+: iterate** — self-reflection after each cycle
 - **Forced points** — every point runs, no skipping
 - **Gate 11** — verifier must pass before next point (under Mastery Gate)
-- **Auto-detect** — project size auto-determines agent count
-- **YOLO default ON** — auto-approve all, no manual confirmation
+- **Auto-detect** — project size auto-determines agent count (11/33/66/999)
+- **YOLO default ON** — auto-approve cosmetic/reversible ops; always blocks destructive/security/cross-boundary
 - **Scale: 11→999** — no hard cap on agent count
+
+## Phase 0 Completion (v6.0.0)
+Completed by 6 agents (3 research + 3 build) on the framework itself.
+Key findings recorded in PRD.md:
+- YOLO semantics: auto-approve zone list + always-block zone list + safety valve
+- Mastery Gate: 7-dimension scoring, 4 thresholds, non-local cross-check algorithm
+- Scaling: 3-tier hierarchy via delegate_task, adaptive micro-batching, content-addressable file safety
+- Gate 11 ≠ Mastery Gate: Gate 11 is per-point verification; Mastery Gate is per-phase diversified cross-check
