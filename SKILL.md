@@ -75,29 +75,70 @@ PHASE 3: HUNTING & QUALITY (3 points × 11 agents = 33 total)
 
 ## Phase 1: Foundation — BUILD
 
-### Point 1: PRD Build (ASK → RESEARCH → FORMAT)
+### Point 1: PRD Build (ASK → 33 RESEARCH → 33 BUILD → FORMAT)
 
-This is the **first action** of the entire framework. The agent does NOT start coding until this is complete.
+This is the **first action** of the entire framework. **66 agents total** (33 research + 33 build).
 
 **Step 1: Ask user for PRD (via clarify tool)**
-- Use the `clarify()` tool to ask the user for project requirements
-- Ask at least these questions:
-  1. What are you building? (name + one-line description)
-  2. What is the core problem it solves?
-  3. Who is the target user?
-  4. What are the MUST-HAVE features? (list each one)
-  5. What tech stack preferences? (languages, frameworks, databases)
-  6. What is NOT in scope? (explicitly excluded features)
-  7. What is the timeline / deadline?
-  8. What existing code or resources do you already have?
-  9. Any constraints or dealbreakers? (budget, performance, compliance)
-  10. What does success look like? (metrics, milestones)
+Use the `clarify()` tool to ask the user for project requirements. Ask at least these 10 questions:
+1. What are you building? (name + one-line description)
+2. What is the core problem it solves?
+3. Who is the target user?
+4. What are the MUST-HAVE features? (list each one)
+5. What tech stack preferences? (languages, frameworks, databases)
+6. What is NOT in scope? (explicitly excluded features)
+7. What is the timeline / deadline?
+8. What existing code or resources do you already have?
+9. Any constraints or dealbreakers? (budget, performance, compliance)
+10. What does success look like? (metrics, milestones)
+11. [OPTIONAL] YOLO mode? (ask: "Auto-approve all tool calls?")
+12. [OPTIONAL] Cross-model review? (ask: "Use a different model for review?")
 
 **Step 2: 33 research agents (spawn via kanban swarm)**
-- Spawn 33 research agents using `hermes kanban swarm --worker ... ×33`
-- Each agent researches a specific aspect of the project domain
-- Research agents read documentation, analyze competitors, find best practices
-- Output: domain research report with references
+```bash
+hermes kanban swarm \
+  --worker default:"Research domain 1/33" \
+  ... ×33 \
+  --verifier default \
+  --synthesizer default \
+  "Research project domain — 33 agents"
+```
+
+Research topics (distributed across 33 agents):
+- Core domain analysis (competitors, landscape, state of the art)
+- Technical patterns and best practices for the domain
+- Architecture patterns that fit the use case
+- Security considerations specific to the domain
+- Performance and scalability requirements
+- User experience patterns
+- Deployment and infrastructure patterns
+- Edge cases and failure modes
+
+**Step 3: 33 build agents (spawn via kanban swarm)**
+After research completes and verifier passes:
+
+```bash
+hermes kanban swarm \
+  --worker default:"Build PRD section 1/33" \
+  ... ×33 \
+  --verifier default \
+  --synthesizer default \
+  "Build PRD document from research — 33 agents"
+```
+
+Build agents:
+- Format PRD in custom professional format
+- Generate specifications from research findings
+- Break down requirements into implementable tasks
+- Cross-reference user quotations with research findings
+- Generate architecture overview
+- Generate success metrics and milestones
+
+**Step 4: Format PRD to file (NO user input loss)**
+- ALL user input is preserved as **direct 1:1 quotations** (every word, every message)
+- The PRD file uses a Custom Professional Format with long-form descriptions
+
+**Output file:** `PRD_[ProjectName]_v1.0.md` in project root.
 
 ```bash
 hermes kanban swarm \
@@ -233,7 +274,7 @@ hermes kanban swarm \
 
 ---
 
-## First Cycle Rule: NO ITERATION
+## First Cycle Rule: BUILD ONLY — NO ITERATION
 
 The first cycle (Phase 1 → 2 → 3) is **BUILD ONLY**:
 - No self-reflection jury
@@ -242,10 +283,25 @@ The first cycle (Phase 1 → 2 → 3) is **BUILD ONLY**:
 - Just build the complete foundation through all 3 phases
 
 Iteration logic activates from **cycle 2 onward**:
-- After each full cycle, run self-reflection on 5 dimensions
-- MASTERPIECE (≥0.85, flaws<5) → SHIP + GITHUB
-- FLAWED (any<0.7 or flaws>10) → LOOP AGAIN
-- CAN'T IMPROVE (3 cycles flat) → STOP
+- After each full cycle, run self-reflection on **6 dimensions**
+- **Gate mastery:** Minimum 3 full 3×3 cycles. Findings must be **DIVERSIFIED** across PRD areas (not local to one area). A single-area fix doesn't count as mastery.
+- Self-reflection verdicts:
+  - **MASTERPIECE** (all 6 ≥ 0.85, flaws < 5, improving ≥ 3 cycles, findings diversified across PRD areas) → SHIP + GITHUB
+  - **FLAWED** (any < 0.7 or flaws > 10 or findings not diversified) → LOOP AGAIN
+  - **CAN'T IMPROVE** (≥ 3 cycles with < 5% improvement each) → STOP
+
+### Self-Reflection — 6 Dimensions
+
+| # | Dimension | Score 0-1 | What It Measures |
+|---|-----------|-----------|------------------|
+| 1 | Code Quality | ≥ 0.85 | Readability, maintainability, test coverage, duplication |
+| 2 | Architecture | ≥ 0.85 | SOLID, modularity, trade-offs, coupling, scalability |
+| 3 | Security | ≥ 0.85 | Vulnerability surface, threat model coverage, defense depth |
+| 4 | Completeness | ≥ 0.85 | Full PRD coverage, all features, all edge cases |
+| 5 | Novelty | ≥ 0.85 | Innovation vs rehashing, advancement of state |
+| 6 | Performance & Scalability | ≥ 0.85 | Speed, resource usage, scaling limits, bottlenecks |
+
+**Diversification rule:** Findings must span at least 3 different PRD areas (e.g., architecture + security + performance, not just 3 architecture fixes). Mastery requires breadth, not just depth.
 
 ---
 
