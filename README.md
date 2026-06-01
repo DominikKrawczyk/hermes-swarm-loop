@@ -1,205 +1,155 @@
-# 🐝 Hermes Swarm Loop — Get Shit Done
+# 🐝 Hermes Swarm Loop — 3×3×3×N
 
-**The 3×3 Ralph Loop for Hermes + DeepSeek.**
+**Build anything — blockchain, infrastructure, complex applications — with 3-loop autonomous iteration, hive swarm (33→999 agents), cross-model review, and self-reflection that determines when something is truly a masterpiece.**
 
-Build anything — blockchain, infrastructure, full applications — with 400-agent swarms, 3-point iteration loops, bug/security hunting, and self-reflection that determines when something is truly a masterpiece.
+Inspired by the best of: [Ralph Loop](https://github.com/snarktank/ralph) (19.8k⭐) × [Ralphy](https://github.com/michaelshimeles/ralphy) (2.9k⭐) × [ARIS](https://github.com/wanshuiyin/Auto-claude-code-research-in-sleep) (11.2k⭐) × [Hive](https://github.com/aden-hive/hive) (10.5k⭐)
 
 ```
-AUDIT → IMPROVE → REVIEW → REFLECT → SHIP or LOOP AGAIN
-                ↕ (3× sub-iterations each)
-         3 HUNT TYPES: bugs · architecture · security
-                ↕ (3 depths × 3 agents each)
-         400 AGENTS IN PARALLEL
+┌──────────────────────────────────────────────────────────────────────┐
+│             LOOP 1: DEVELOPMENT (AUDIT → IMPROVE → REVIEW)           │
+│                   × 3 sub-iterations each × N agents                 │
+├──────────────────────────────────────────────────────────────────────┤
+│             LOOP 2: HUNTING (BUGS → ARCHITECTURE → SECURITY)         │
+│                   × 3 depths each × N agents                         │
+├──────────────────────────────────────────────────────────────────────┤
+│             LOOP 3: SIMPLICITY & CONSOLIDATION                       │
+│             1. Dead Code Audit + Consolidate (NOT destroy)           │
+│             2. Occam's Razor (bottlenecks reduction)                 │
+│             3. PRD Alignment ← BACK TO LOOP 1                        │
+├──────────────────────────────────────────────────────────────────────┤
+│             SELF-REFLECTION JURY × cross-model review                │
+│             → MASTERPIECE / FLAWED (loop again) / CAN'T IMPROVE      │
+│             SWARM: 33→999 agents | YOLO mode                         │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ## 🚀 Quick Start
+
+This is a **prompt/skill methodology** for [Hermes Agent](https://github.com/DominikKrawczyk/hermes-agent). No Python code to run—just load the skill.
 
 ```bash
 # Clone
 git clone https://github.com/DominikKrawczyk/hermes-swarm-loop.git
 cd hermes-swarm-loop
 
-# Make launch script executable
-chmod +x launch.sh
+# Use as a skill in Hermes:
+# "Load the hermes-swarm-loop skill and run a 3-loop cycle on /path/to/project — N=33, yolo"
 
-# Launch full loop
-./launch.sh \
-  --name "MyBlockchain" \
-  --desc "Proof-of-Stake blockchain with smart contracts" \
-  --model deepseek-v4-flash \
-  --push
-
-# Or step by step:
-python launchers/swarm_400.py --name "X" --desc "Build X"
-python loop.py --name "X" --desc "Build X" --max-cycles 100
-python hunting/bounty_hunter.py --path . --depth 3
-python reflection/engine.py swarm_state.json
+# Eat your own dogfood:
+# "Load the hermes-swarm-loop skill and run a 3-loop cycle on /opt/hermes-swarm-loop/ — N=33"
 ```
 
-## 🧠 The 3×3 Ralph Loop
+## 🧠 The 3×3×3×N Architecture
 
-```
-ITERATION CYCLE N:
-  ┌─────────────────────────────────────────────────────┐
-  │  [1] AUDIT                                           │
-  │    → 10 parallel audit agents                        │
-  │    → 3× sub-audits (each spawns 3 more agents)       │
-  │    → Total: 19 agents per audit                      │
-  │                                                      │
-  │  [2] IMPROVE                                          │
-  │    → 10 parallel improve agents                      │
-  │    → 3× sub-improves (each spawns 3 more agents)     │
-  │    → Takes findings from AUDIT and implements fixes   │
-  │                                                      │
-  │  [3] REVIEW                                           │
-  │    → Bug hunters (5 agents)                          │
-  │    → Architecture hunters (5 agents)                 │
-  │    → Security hunters (5 agents)                     │
-  │    → 3× sub-reviews (each spawns 3 more agents)      │
-  └─────────────────────────────────────────────────────┘
-                      ↓
-  ┌─────────────────────────────────────────────────────┐
-  │  SELF-REFLECTION                                     │
-  │  Evaluates on 5 dimensions:                          │
-  │  • Code Quality    • Architecture    • Security      │
-  │  • Completeness    • Novelty                        │
-  │                                                      │
-  │  → MASTERPIECE? → SHIP IT, push to GitHub           │
-  │  → FLAWED?      → LOOP AGAIN (with accumulated      │
-  │                    context from previous cycles)     │
-  └─────────────────────────────────────────────────────┘
-```
+### Loop 1 — Development (AUDIT → IMPROVE → REVIEW)
 
-**Each cycle = 3 points × (1 main + 3 sub) × agents = ~100 agents per iteration.**
+| Point | Sub 1 | Sub 2 | Sub 3 |
+|-------|-------|-------|-------|
+| **AUDIT** | Surface: syntax, types, structure | Deep: logic, state, error handling | Exhaustive: all files, edge cases, docs |
+| **IMPROVE** | Critical: security, crashes | Feature: missing functionality | Polish: perf, docs, quality |
+| **REVIEW** | Auto-verify: lint, test, build | Manual logic review | Final quality gate |
 
-## 🔥 400-Agent Swarm
+### Loop 2 — Hunting (BUGS → ARCHITECTURE → SECURITY)
 
-| Phase | Agents | Purpose |
-|-------|--------|---------|
-| 🏗️ Architecture & Planning | 40 | Design system architecture |
-| 💻 Code Generation | 200 | Write all the code |
-| 🔒 Security Audit | 40 | Find vulnerabilities |
-| 🐛 Bug Hunting | 40 | Find logic errors |
-| ✨ Review & Polish | 40 | Quality assurance |
-| 📝 Documentation | 40 | Write docs |
+| Hunt | L1: Surface | L2: Deep | L3: Expert |
+|------|-------------|----------|------------|
+| **🐛 BUGS** | Syntax, null pointers, off-by-one | Race conditions, memory leaks | Heisenbugs, protocol violations |
+| **🏗️ ARCH** | Structure, naming, patterns | Coupling, SOLID, DI, tech debt | Scalability, CAP, distributed |
+| **🔒 SECURITY** | Secrets, injection, auth | OWASP Top 10 (XSS, CSRF, IDOR) | Crypto, side channels, supply chain |
+
+### Loop 3 — Simplicity & Consolidation
+
+1. **Dead Code Audit + Consolidation** — find dead/redundant code, REPOSITION rather than delete, consolidate into shared utilities, slight architectural refactoring (no rewrites)
+2. **Operational Occam's Razor** — eliminate testing bottlenecks, CI/CD inefficiencies, build/deploy slowdowns, tooling overhead
+3. **PRD Alignment Audit** — compare HAP (current state) vs PRD vision, account for Loop 1 & 2 changes, feed PRD gap errors back to Loop 1. **ALIGNMENT, not further looping.**
+
+### Self-Reflection Jury
+
+After all 3 loops complete, a cross-model jury evaluates on 5 dimensions:
+
+| Dimension | Score (0-1) | Evidence |
+|-----------|-------------|----------|
+| Code Quality | ≥ 0.85 | Readability, maintainability, test coverage |
+| Architecture | ≥ 0.85 | Design quality, SOLID, scalability |
+| Security | ≥ 0.85 | Vulnerability surface, threat model |
+| Completeness | ≥ 0.85 | Full PRD coverage, all features |
+| Novelty | ≥ 0.85 | Innovative approach vs rehashing |
+
+**Outcomes:**
+- ✅ **MASTERPIECE** (all ≥ 0.85, flaws < 5, improving ≥ 3 cycles) → SHIP + GITHUB
+- 🔄 **FLAWED** (any < 0.7 or flaws > 10) → LOOP AGAIN on weakest dimension
+- ⏹️ **CAN'T IMPROVE** (3+ cycles flat) → STOP + analysis report
+
+## 🔥 Hive Swarm (33→999 Agents)
+
+Start small (33), scale up based on findings volume:
+
+| Scale | Agents | When |
+|-------|--------|------|
+| Small | 33 | First cycle, small project |
+| Medium | 100 | After first 2 cycles |
+| Large | 400 | Complex projects |
+| Maximum | 999 | Full-stack blockchain, massive infrastructure |
 
 ## 🎯 YOLO Mode
 
-```bash
---yolo    # Auto-approve everything, zero brakes
-```
+Auto-approve ALL tool calls. No permissions, no brakes, maximum velocity.
+Activate with: `YOLO=true` or pass `--yolo` in task description.
 
-When you need to **get shit done**:
-- No permission prompts
-- No confirmation dialogs
-- Maximum velocity
-- All 400 agents fire at once
+## 🔄 Cross-Model Review (Inspired by ARIS)
 
-## 🔍 Bounty Hunting (3×3×3)
+**Core principle: "A loop can DRIVE, it cannot ACQUIT"**
 
-Three hunt types, each with 3 depth levels, each with 3 parallel agents:
-
-```
-🐛 BUG HUNTER
-  Level 1: Syntax errors, null pointers
-  Level 2: Race conditions, memory leaks
-  Level 3: Heisenbugs, protocol violations
-
-🏗️ ARCHITECTURE HUNTER
-  Level 1: File organization, naming
-  Level 2: Coupling, SOLID violations
-  Level 3: Scalability, distributed systems
-
-🔒 SECURITY HUNTER
-  Level 1: Hardcoded secrets, basic injection
-  Level 2: CSRF, XSS, SQL injection, IDOR
-  Level 3: Cryptography flaws, side channels
-```
-
-## 🪞 Self-Reflection
-
-After each iteration cycle, the framework asks:
-
-> **"Is this a masterpiece or still flawed?"**
-
-| Score | Verdict |
-|-------|---------|
-| ≥ 0.85 + min ≥ 0.7 + flaws < 5 + cycles ≥ 3 + improving | ✅ **MASTERPIECE** — ship it |
-| ≥ 0.7 + improving | 🔄 **Close** — one more cycle |
-| < 0.7 or degrading | 🔄 **Continue** — focus on weakest dimension |
+- **Executor** (DeepSeek): checks execution completeness — "was the task finished?"
+- **Reviewer** (different model family — Claude/GPT/Gemini): checks quality and correctness
+- Breaks self-play blind spots: the same model reviewing its own work misses patterns
 
 ## 📦 Project Structure
 
 ```
 hermes-swarm-loop/
-├── loop.py                   # Core loop engine (3×3 Ralph Loop)
-├── launch.sh                 # Main launcher script
-├── orchestrator/             # Swarm orchestration
-│   └── __init__.py
-├── agents/                   # Agent templates
-│   └── __init__.py
-├── skills/
-│   └── hermes-swarm-loop.md  # Hermes skill definition
-├── hunting/
-│   └── bounty_hunter.py      # 3×3×3 hunting engine
-├── reflection/
-│   └── engine.py             # Self-reflection engine
-├── launchers/
-│   └── swarm_400.py          # 400-agent swarm launcher
-├── examples/                 # Usage examples
-├── tests/                    # Test suite
-└── README.md                 # This file
+├── SKILL.md                        # v3.0.0 — the actual framework (this is THE framework)
+├── README.md                       # This file
+├── launch.sh                       # Legacy launcher (shell-based)
+├── archive/
+│   └── python-v2.0.0/              # Archived old Python-based version
+└── swarm_state.json                # State tracking
 ```
 
-## 🔄 Resume from Checkpoint
+## 🔬 Eat Your Own Dogfood
 
-The loop auto-saves state after every batch and cycle:
+The framework improves itself. Run the 3-loop cycle on `/opt/hermes-swarm-loop/`:
 
-```bash
-# Resume from where you left off
-./launch.sh --name "X" --desc "X" --state swarm_state.json
+1. **Loop 1:** AUDIT the framework files → IMPROVE → REVIEW
+2. **Loop 2:** Hunt for bugs, architecture flaws, security issues in the framework
+3. **Loop 3:** Consolidate dead code, reduce operational complexity, align with PRD
+4. **Self-reflect:** Is the framework itself a masterpiece?
+5. **Push** improved framework to GitHub
+6. **Repeat**
 
-# Resume specific phase
-python loop.py --name "X" --desc "X" --state swarm_state.json --max-cycles 50
-```
+## 📊 Comparison: vs Original Ralph
+
+| Feature | Ralph (snarktank) | Hermes Swarm Loop |
+|---------|-------------------|-------------------|
+| Loop structure | 1 task → implement → check → repeat | 3 loops × 3 points × 3 sub × N |
+| Points per iteration | 1 story | 9 (3 dev + 3 hunt + 3 simplicity) |
+| Multiplier | 1× | 3×3×3×N |
+| Parallel agents | 1 | Up to 999 |
+| Hunting | None | Bugs + Architecture + Security ×3 depths |
+| Simplicity audit | None | Dead code consolidation + Occam's Razor + PRD Alignment |
+| Review model | Self-review | Cross-model review (executor ≠ reviewer) |
+| Self-reflection | Pass/fail | 5-dimension masterpiece/flawed/cannot-improve |
+| YOLO | No | Yes |
+| Model agnostic | Claude/Amp | DeepSeek, Claude, GPT, Gemini, any |
 
 ## 🤖 Supported Models
 
-| Model | Flag |
-|-------|------|
-| DeepSeek V4 Flash | `--model deepseek-v4-flash` |
-| Claude Sonnet 4 | `--model claude-sonnet-4` |
-| Claude Opus 4 | `--model claude-opus-4` |
-| GPT-5 | `--model gpt-5` |
-| Any Hermes provider | `--model <provider/model>` |
-
-## 🚀 Push to GitHub
-
-```bash
-./launch.sh --name "MyBlockchain" --desc "PoS blockchain" --push
-```
-
-Auto-creates `github.com/DominikKrawczyk/hermes-swarm-loop-myblockchain` and pushes all code.
-
-## 📊 Example: Building a Blockchain
-
-```bash
-./launch.sh \
-  --name "NexusChain" \
-  --desc "Layer 1 proof-of-stake blockchain with EVM compatibility, 100k TPS, sharding, and cross-chain bridge" \
-  --model deepseek-v4-flash \
-  --agents 400 \
-  --max-cycles 100 \
-  --yolo \
-  --push
-```
-
-This will:
-1. Launch 400 DeepSeek agents to build the entire blockchain
-2. Run 3×3 Ralph Loops to iterate until masterpiece
-3. Hunt for bugs, architectural flaws, and security vulnerabilities at each iteration
-4. Self-reflect to determine when it's truly done
-5. Push to GitHub when complete
+Hermes supports any LLM provider. The framework works with:
+- DeepSeek V4 Flash / Pro
+- Claude (Sonnet 4, Opus 4)
+- GPT-5 / GPT-5.5
+- Gemini 3
+- Any other via Hermes provider config
 
 ---
 
