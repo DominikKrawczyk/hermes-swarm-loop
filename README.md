@@ -108,12 +108,12 @@ Activate with: `YOLO=true` or pass `--yolo` in task description.
 
 ```
 hermes-swarm-loop/
-├── SKILL.md                        # v3.0.0 — the actual framework (this is THE framework)
+├── SKILL.md                        # v4.0.0 — the actual framework (this is THE framework)
 ├── README.md                       # This file
 ├── launch.sh                       # Legacy launcher (shell-based)
 ├── archive/
 │   └── python-v2.0.0/              # Archived old Python-based version
-└── swarm_state.json                # State tracking
+└── swarm_33_audit.sh               # Script: 33-agent AUDIT swarm example
 ```
 
 ## 🔬 Eat Your Own Dogfood

@@ -1,0 +1,37 @@
+cd /opt/hermes-swarm-loop && hermes kanban boards create swarm-audit 2>/dev/null; hermes kanban boards switch swarm-audit && hermes kanban swarm \
+  --worker default:"Surface SKILL.md pt1":hermes-swarm-loop \
+  --worker default:"Surface SKILL.md pt2":hermes-swarm-loop \
+  --worker default:"Surface SKILL.md pt3":hermes-swarm-loop \
+  --worker default:"Surface SKILL.md pt4":hermes-swarm-loop \
+  --worker default:"Surface README.md pt1":hermes-swarm-loop \
+  --worker default:"Surface README.md pt2":hermes-swarm-loop \
+  --worker default:"Surface README.md pt3":hermes-swarm-loop \
+  --worker default:"Surface launch.sh":hermes-swarm-loop \
+  --worker default:"Surface archive files pt1":hermes-swarm-loop \
+  --worker default:"Surface archive files pt2":hermes-swarm-loop \
+  --worker default:"Surface archive files pt3":hermes-swarm-loop \
+  --worker default:"Deep SKILL.md rules1-3":hermes-swarm-loop \
+  --worker default:"Deep SKILL.md rules4-6":hermes-swarm-loop \
+  --worker default:"Deep SKILL.md rules7-10":hermes-swarm-loop \
+  --worker default:"Deep README.md claims1":hermes-swarm-loop \
+  --worker default:"Deep README.md claims2":hermes-swarm-loop \
+  --worker default:"Deep README.md claims3":hermes-swarm-loop \
+  --worker default:"Deep archive loop.py":hermes-swarm-loop \
+  --worker default:"Deep archive bounty_hunter.py":hermes-swarm-loop \
+  --worker default:"Deep archive swarm_400.py":hermes-swarm-loop \
+  --worker default:"Deep archive engine.py":hermes-swarm-loop \
+  --worker default:"Deep archive old-skill.md":hermes-swarm-loop \
+  --worker default:"Exhaustive cross-ref arch":hermes-swarm-loop \
+  --worker default:"Exhaustive cross-ref rules1-5":hermes-swarm-loop \
+  --worker default:"Exhaustive cross-ref rules6-10":hermes-swarm-loop \
+  --worker default:"Exhaustive cross-ref quickstart":hermes-swarm-loop \
+  --worker default:"Exhaustive README actionable1":hermes-swarm-loop \
+  --worker default:"Exhaustive README actionable2":hermes-swarm-loop \
+  --worker default:"Exhaustive README actionable3":hermes-swarm-loop \
+  --worker default:"Exhaustive edge loop.py":hermes-swarm-loop \
+  --worker default:"Exhaustive edge bounty.py":hermes-swarm-loop \
+  --worker default:"Exhaustive edge swarm_400":hermes-swarm-loop \
+  --worker default:"Exhaustive edge engine.py":hermes-swarm-loop \
+  --verifier default \
+  --synthesizer default \
+  "Audit Hermes Swarm Loop framework — v3.1.0 — 33 agents" --json
