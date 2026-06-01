@@ -1,7 +1,7 @@
 ---
 name: hermes-swarm-loop
-description: "Phase 0: PRD BUILD 66 agents (research+questions+33+33). Phase 1-3: 3 points × 11 agents each. Hunting + Simplicity loops. First cycle BUILD. Self-reflection: masterpiece/flawed/cannot-improve. YOLO. Forced points. Auto-detect."
-version: 5.0.0
+description: "Phase 0: PRD BUILD 66 — Phase 1-3: 3 points × 11 agents each — Simplicity → Phase 0 — Cycle 1 BUILD, 2+ iterate"
+version: 5.0.2
 author: Edward Puszczyk
 github: DominikKrawczyk
 license: MIT
@@ -9,39 +9,46 @@ license: MIT
 
 # Hermes Swarm Loop — 3 × 3 × 11
 
-**Phase 0 — PRD BUILD (66 agents, one-time)**
-Build runs until full PRD is done.
-- Research PRD input + questions from user
-- 33 research agents + 33 build agents
-- Format PRD — ALL user input 1:1 quotations, no loss
+```
+Phase 0: PRD BUILD — 66 agents (research + questions + 33+33) — one-time, until full PRD done
+Phase 1: ARCHITECTURE 11 + SETUP 11 + CODE GENERATION 11
+Phase 2: AUDIT 11 + IMPROVE 11 + REVIEW 11
+Phase 3: BUGS 11 + ARCH 11 + SECURITY 11
+Simplicity: Dead Code 11 + Occam 11 + PRD Alignment 11
 
-**Phase 1 — 3 points × 11 agents**
-- Point 1: ARCHITECTURE
-- Point 2: SETUP
-- Point 3: CODE GENERATION / DEV START
+Cycle 1: BUILD | Cycle 2+: iterate
+PRD Align → feeds back to BUILD (similar to IMPROVE)
+Gate: 11 per point | Forced points | Auto-detect | YOLO default ON | Scale 11→999
+```
 
-**Phase 2 — 3 points × 11 agents**
-- Point 1: AUDIT
-- Point 2: IMPROVE
-- Point 3: REVIEW
+## Phase 0 — PRD BUILD (66 agents, one-time)
+66 agents: 33 research + 33 build. Runs until full PRD is complete.
 
-**Phase 3 — 3 points × 11 agents**
-- Point 1: BUGS
-- Point 2: ARCHITECTURE
-- Point 3: SECURITY
+## Phase 1 — Development (3 points × 11 agents)
+- ARCHITECTURE: architecture design
+- SETUP: project setup
+- CODE GENERATION: implementation start
 
-**Simplicity — 3 points × 11 agents**
-Feeds back to Phase 0 (PRD gaps).
-- Point 1: Dead Code Consolidation (not destroy, consolidate, leverage, refactor)
-- Point 2: Occam's Razor (bottlenecks reduction)
-- Point 3: PRD Alignment (HAP vs PRD, gaps feed Phase 0)
+## Phase 2 — Quality (3 points × 11 agents)
+- AUDIT: code audit
+- IMPROVE: improvements
+- REVIEW: quality gate
 
-## Cycle 1: BUILD — no iteration, no self-reflection
-## Cycle 2+: iterate — self-reflection after cycle 3
+## Phase 3 — Hunting (3 points × 11 agents)
+- BUGS: bug hunting
+- ARCH: architecture review
+- SECURITY: security audit
+
+## Simplicity (3 points × 11 agents)
+- Dead Code: consolidate, not destroy
+- Occam: bottlenecks reduction
+- PRD Alignment: gaps drive rebuild → Phase 0
+
 ## Rules
-- Forced points: each loop forces every point exactly, no skipping, no shortcuts
-- Gate at 11 agents per point (verifier passes before next point starts)
-- Auto-detect logic: framework detects project size and maximizes agents accordingly
-- Self-reflection: MASTERPIECE / FLAWED / CAN'T IMPROVE
-- YOLO: optional
-- Scale: 11 → 999, no hard cap
+- **Cycle 1: BUILD** — no iteration, just build from scratch
+- **Cycle 2+: iterate** — self-reflection after each cycle
+- **Forced points** — every point runs, no skipping
+- **Gate 11** — verifier must pass before next point
+- **Auto-detect** — project size auto-determines agent count
+- **YOLO default ON** — auto-approve all, no manual confirmation
+- **Scale: 11→999** — no hard cap on agent count
