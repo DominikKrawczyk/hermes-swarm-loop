@@ -23,7 +23,7 @@ Gate: 11 per point | Forced points | Auto-detect | YOLO default ON | Scale 11→
 4. **Mastery Gate** after each phase — diversified non-local checks across ALL PRD areas.
 5. **Auto Skill Update** after each phase — skill learns and evolves automatically.
 6. **Cycle 1** = BUILD from scratch. **Cycle 2+** = iterate with self-reflection.
-7. **YOLO default ON** — auto-approve all. Scale 11→999.
+7. **YOLO default ON** — auto-approve cosmetic/reversible ops; blocks destructive/security/cross-boundary changes. Scale 11→999.
 
 ## Installation
 
