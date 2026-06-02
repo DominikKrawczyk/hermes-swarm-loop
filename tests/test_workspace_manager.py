@@ -9,6 +9,7 @@ Worktree tests verify git integration (when a repo is available).
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 from engine.gate_11 import Gate11Verifier
@@ -206,11 +207,11 @@ class TestWorkspaceDataclass:
         ws = Workspace(kind=WorkspaceKind.DIR, path=d)
         assert ws.is_ready is True
 
-    def test_is_ready_false_when_empty(self, tmp_path: Path):
+    def test_is_ready_true_when_empty(self, tmp_path: Path):
         d = tmp_path / "empty_dir"
         d.mkdir()
         ws = Workspace(kind=WorkspaceKind.DIR, path=d)
-        assert ws.is_ready is False
+        assert ws.is_ready is True  # directory exists
 
     def test_is_ready_false_when_nonexistent(self, tmp_path: Path):
         d = tmp_path / "does_not_exist"
@@ -317,3 +318,67 @@ class TestGate11Smoke:
         v_result = v.validate_handoff(h, "unknown")
         assert not v_result.valid
         assert any("worker_id" in e for e in v_result.errors)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# WorkspaceManager — Worktree with real git repo
+# ═══════════════════════════════════════════════════════════════════
+
+class TestWorkspaceWorktreeIntegration:
+    """Worktree tests using a real tmp_path git repo."""
+
+    def _init_repo(self, path: Path, branch: str = "main") -> Path:
+        """Initialize a git repo at *path* with one commit on *branch*."""
+        path.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["git", "init", "-b", branch], cwd=str(path),
+                       capture_output=True, check=True)
+        subprocess.run(["git", "config", "user.email", "test@test.com"],
+                       cwd=str(path), capture_output=True, check=True)
+        subprocess.run(["git", "config", "user.name", "Test"],
+                       cwd=str(path), capture_output=True, check=True)
+        (path / "README.md").write_text("# Test Repo")
+        subprocess.run(["git", "add", "."], cwd=str(path),
+                       capture_output=True, check=True)
+        subprocess.run(["git", "commit", "-m", "init"], cwd=str(path),
+                       capture_output=True, check=True)
+        return path
+
+    def test_worktree_create_and_teardown(self, tmp_path: Path):
+        """Create a git repo, add a worktree, then tear it down."""
+        repo = self._init_repo(tmp_path / "main-repo")
+        # Create the branch first
+        subprocess.run(["git", "branch", "feature/test-branch"],
+                       cwd=str(repo), capture_output=True, check=True)
+
+        wm = WorkspaceManager(main_repo=str(repo))
+        ws = wm.setup("worktree", task_id="t_worktree_integration",
+                       branch="feature/test-branch")
+        assert ws.path.exists()
+        assert ws.kind == WorkspaceKind.WORKTREE
+        assert ws.branch == "feature/test-branch"
+        assert (ws.path / "README.md").exists()
+
+        # Teardown removes the worktree
+        wm.teardown(ws, cleanup=True)
+        assert not ws.path.exists()
+
+    def test_worktree_existing_path_does_not_recreate(self, tmp_path: Path):
+        """If the worktree path already exists, setup does not error."""
+        repo = self._init_repo(tmp_path / "repo")
+        subprocess.run(["git", "branch", "feature/existing"],
+                       cwd=str(repo), capture_output=True, check=True)
+
+        wm = WorkspaceManager(main_repo=str(repo))
+        ws = wm.setup("worktree", task_id="t_existing",
+                       branch="feature/existing")
+        assert ws.path.exists()
+
+        # Setting up again with same branch should not error
+        wm2 = WorkspaceManager(main_repo=str(repo))
+        ws2 = wm2.setup("worktree", task_id="t_existing_2",
+                         branch="feature/existing")
+        assert ws2.path.exists()
+        wm2.teardown(ws2, cleanup=True)
+
+        # Cleanup first worktree too
+        wm.teardown(ws, cleanup=True)

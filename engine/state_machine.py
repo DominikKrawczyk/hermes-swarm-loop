@@ -300,7 +300,9 @@ class PointMachine:
                 "INSERT INTO point_state (phase, point, status, agent_count, started_at, version) "
                 "VALUES (?, ?, 'todo', ?, NULL, 1) "
                 "ON CONFLICT(phase, point) DO UPDATE SET "
-                "  status=COALESCE(NULLIF(status, 'done'), 'todo'), "
+                "  status='todo', "
+                "  started_at=NULL, "
+                "  completed_at=NULL, "
                 "  version=version+1",
                 (phase, point, agent_count)
             )
@@ -331,12 +333,12 @@ class PointMachine:
         with self._db.cursor() as c:
             c.execute(
                 "UPDATE point_state SET status='done', completed_at=?, version=version+1 "
-                "WHERE phase=? AND point=? AND status='running'",
+                "WHERE phase=? AND point=? AND (status='running' OR status='todo')",
                 (now, phase, point)
             )
             if c.rowcount == 0:
                 raise ConflictError(
-                    f"Cannot complete point '{phase}/{point}': not running"
+                    f"Cannot complete point '{phase}/{point}': not running or todo"
                 )
             c.execute("SELECT * FROM point_state WHERE phase=? AND point=?", (phase, point))
             row = c.fetchone()
@@ -348,12 +350,12 @@ class PointMachine:
         with self._db.cursor() as c:
             c.execute(
                 "UPDATE point_state SET status='failed', completed_at=?, version=version+1 "
-                "WHERE phase=? AND point=? AND status='running'",
+                "WHERE phase=? AND point=? AND (status='running' OR status='todo')",
                 (now, phase, point)
             )
             if c.rowcount == 0:
                 raise ConflictError(
-                    f"Cannot fail point '{phase}/{point}': not running"
+                    f"Cannot fail point '{phase}/{point}': not running or todo"
                 )
             c.execute("SELECT * FROM point_state WHERE phase=? AND point=?", (phase, point))
             row = c.fetchone()

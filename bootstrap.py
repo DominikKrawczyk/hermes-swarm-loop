@@ -37,7 +37,7 @@ def check_env():
         if not shutil.which(cmd):
             errors.append(f"Missing: {name} ({cmd})")
     if sys.version_info < (3, 10):
-        errors.append(f"Python 3.10+ required (got {sys.version_info.major}.{sys.version_info.minor})")
+        errors.append(f"Python 3.10+ required (got {sys.version_info[0]}.{sys.version_info[1]})")
     return errors
 
 

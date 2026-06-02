@@ -66,8 +66,8 @@ class Workspace:
 
     @property
     def is_ready(self) -> bool:
-        """True if the directory exists and is non-empty."""
-        return self.path.is_dir() and any(self.path.iterdir())
+        """True if the directory exists (may be empty for scratch workspaces)."""
+        return self.path.is_dir()
 
 
 class WorkspaceError(Exception):
