@@ -138,6 +138,28 @@ class StateDB:
             conn.commit()
             conn.close()
 
+    def open(self):
+        """Idempotent open — schema is already created in __init__.
+
+        Provided for conftest compatibility (fixtures may call open/close
+        lifecycle before/after tests).
+        """
+        pass
+
+    def ensure_schema(self):
+        """Idempotent schema creation — already done in _init_db.
+
+        Provided for conftest compatibility.
+        """
+        pass
+
+    def close(self):
+        """No-op close — connections are short-lived per cursor() call.
+
+        Provided for conftest compatibility.
+        """
+        pass
+
     @contextmanager
     def cursor(self):
         with self._lock:
@@ -167,6 +189,8 @@ class PhaseStatus(Enum):
     TODO = "todo"
     RUNNING = "running"
     DONE = "done"
+    FAILED = "failed"
+    ARCHIVED = "archived"
     BLOCKED = "blocked"
 
 class PhaseMachine:
@@ -199,6 +223,39 @@ class PhaseMachine:
             c.execute("SELECT * FROM phase_state WHERE phase=?", (phase,))
             row = c.fetchone()
         self._db.log_event("phase_started", {"phase": phase})
+        return PhaseEntry(**dict(row))
+
+    def fail_phase(self, phase: str, reason: str = "") -> PhaseEntry:
+        now = datetime.utcnow().isoformat()
+        with self._db.cursor() as c:
+            c.execute(
+                "UPDATE phase_state SET status='failed', completed_at=?, version=version+1 "
+                "WHERE phase=? AND status='running'",
+                (now, phase)
+            )
+            if c.rowcount == 0:
+                raise ConflictError(
+                    f"Cannot fail phase '{phase}': not in running state"
+                )
+            c.execute("SELECT * FROM phase_state WHERE phase=?", (phase,))
+            row = c.fetchone()
+        self._db.log_event("phase_failed", {"phase": phase, "reason": reason})
+        return PhaseEntry(**dict(row))
+
+    def archive_phase(self, phase: str) -> PhaseEntry:
+        with self._db.cursor() as c:
+            c.execute(
+                "UPDATE phase_state SET status='archived', version=version+1 "
+                "WHERE phase=? AND (status='done' OR status='failed')",
+                (phase,)
+            )
+            if c.rowcount == 0:
+                raise ConflictError(
+                    f"Cannot archive phase '{phase}': not done or failed"
+                )
+            c.execute("SELECT * FROM phase_state WHERE phase=?", (phase,))
+            row = c.fetchone()
+        self._db.log_event("phase_archived", {"phase": phase})
         return PhaseEntry(**dict(row))
 
     def complete_phase(self, phase: str) -> PhaseEntry:
@@ -241,15 +298,32 @@ class PointMachine:
         with self._db.cursor() as c:
             c.execute(
                 "INSERT INTO point_state (phase, point, status, agent_count, started_at, version) "
-                "VALUES (?, ?, 'running', ?, ?, 1) "
+                "VALUES (?, ?, 'todo', ?, NULL, 1) "
                 "ON CONFLICT(phase, point) DO UPDATE SET "
-                "  status=COALESCE(NULLIF(status, 'done'), 'running'), "
+                "  status=COALESCE(NULLIF(status, 'done'), 'todo'), "
                 "  version=version+1",
-                (phase, point, agent_count, now)
+                (phase, point, agent_count)
             )
             c.execute("SELECT * FROM point_state WHERE phase=? AND point=?", (phase, point))
             row = c.fetchone()
         self._db.log_event("point_created", {"phase": phase, "point": point})
+        return PointEntry(**dict(row))
+
+    def start_point(self, phase: str, point: str) -> PointEntry:
+        now = datetime.utcnow().isoformat()
+        with self._db.cursor() as c:
+            c.execute(
+                "UPDATE point_state SET status='running', started_at=?, version=version+1 "
+                "WHERE phase=? AND point=? AND status='todo'",
+                (now, phase, point)
+            )
+            if c.rowcount == 0:
+                raise ConflictError(
+                    f"Cannot start point '{phase}/{point}': not in todo state"
+                )
+            c.execute("SELECT * FROM point_state WHERE phase=? AND point=?", (phase, point))
+            row = c.fetchone()
+        self._db.log_event("point_started", {"phase": phase, "point": point})
         return PointEntry(**dict(row))
 
     def complete_point(self, phase: str, point: str) -> PointEntry:
@@ -267,6 +341,23 @@ class PointMachine:
             c.execute("SELECT * FROM point_state WHERE phase=? AND point=?", (phase, point))
             row = c.fetchone()
         self._db.log_event("point_completed", {"phase": phase, "point": point})
+        return PointEntry(**dict(row))
+
+    def fail_point(self, phase: str, point: str, reason: str = "") -> PointEntry:
+        now = datetime.utcnow().isoformat()
+        with self._db.cursor() as c:
+            c.execute(
+                "UPDATE point_state SET status='failed', completed_at=?, version=version+1 "
+                "WHERE phase=? AND point=? AND status='running'",
+                (now, phase, point)
+            )
+            if c.rowcount == 0:
+                raise ConflictError(
+                    f"Cannot fail point '{phase}/{point}': not running"
+                )
+            c.execute("SELECT * FROM point_state WHERE phase=? AND point=?", (phase, point))
+            row = c.fetchone()
+        self._db.log_event("point_failed", {"phase": phase, "point": point, "reason": reason})
         return PointEntry(**dict(row))
 
     def get_point(self, phase: str, point: str) -> PointEntry | None:
@@ -289,10 +380,10 @@ class PointMachine:
 # ─── YOLO Machine ────────────────────────────────────────────────
 
 YOLO_ZONES = {
-    "safe":       {"auto_approve": False, "max_parallel": 5,   "desc": "Every action confirmed"},
-    "test":       {"auto_approve": False, "max_parallel": 11,  "desc": "Limited parallel, confirm"},
-    "staging":    {"auto_approve": True,  "max_parallel": 33,  "desc": "Auto-approve, moderate scale"},
-    "production": {"auto_approve": True,  "max_parallel": 999, "desc": "Full auto, max scale"},
+    "safe":       {"auto_approve": False, "max_parallel": 5,   "max_errors": 3,   "desc": "Every action confirmed"},
+    "test":       {"auto_approve": False, "max_parallel": 11,  "max_errors": 5,   "desc": "Limited parallel, confirm"},
+    "staging":    {"auto_approve": True,  "max_parallel": 33,  "max_errors": 10,  "desc": "Auto-approve, moderate scale"},
+    "production": {"auto_approve": True,  "max_parallel": 999, "max_errors": 999, "desc": "Full auto, max scale"},
 }
 
 class YOLOMachine:
@@ -325,7 +416,8 @@ class YOLOMachine:
             c.execute("SELECT * FROM yolo_state WHERE id=1")
             row = c.fetchone()
         s = YOLOState(**dict(row))
-        if s.consecutive_errors >= 5:
+        zone_cfg = YOLO_ZONES.get(s.zone, YOLO_ZONES["safe"])
+        if s.consecutive_errors >= zone_cfg["max_errors"]:
             self.activate_safety_valve()
         return s
 
@@ -336,6 +428,22 @@ class YOLOMachine:
             row = c.fetchone()
         self._db.log_event("safety_valve_activated", {})
         return YOLOState(**dict(row))
+
+    def admit(self, current_runners: int, zone_name: str | None = None) -> bool:
+        """Check whether a new runner may be admitted.
+
+        Returns False if:
+          - Safety valve is active, OR
+          - current_runners >= max_parallel for the zone
+        """
+        state = self.get_state()
+        zone = zone_name or state.zone
+        zone_cfg = YOLO_ZONES.get(zone, YOLO_ZONES["safe"])
+        if state.safety_valve_active:
+            return False
+        if current_runners >= zone_cfg["max_parallel"]:
+            return False
+        return True
 
     def reset_safety_valve(self) -> YOLOState:
         with self._db.cursor() as c:

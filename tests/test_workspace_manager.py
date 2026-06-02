@@ -8,6 +8,7 @@ Worktree tests verify git integration (when a repo is available).
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from engine.gate_11 import Gate11Verifier
@@ -258,3 +259,61 @@ class TestGate11Smoke:
         d = result.to_dict()
         assert d["passed"] is True
         assert d["total_agents"] == 11
+
+    def test_validate_handoff_type_mismatch(self):
+        """validate_handoff catches wrong-type fields."""
+        v = Gate11Verifier()
+        # 'summary' should be str; pass int instead
+        result = v.validate_handoff({
+            "summary": 42, "worker_id": "w01", "point": "x", "phase": "y",
+        }, "w01")
+        assert not result.valid
+        assert any("wrong type" in e for e in result.errors)
+
+    def test_verify_all_done_false_when_some_not_done(self):
+        """11 handoffs but not all 'done' -> passed=False."""
+        v = Gate11Verifier()
+        handoffs = [
+            {"worker_id": f"a{i:02d}", "summary": "done",
+             "point": "setup", "phase": "dev", "status": "done" if i < 10 else "running"}
+            for i in range(11)
+        ]
+        result = v.verify(handoffs)
+        assert result.passed is False
+        assert result.all_done is False
+
+    def test_verify_from_json_valid(self):
+        v = Gate11Verifier()
+        raw = json.dumps([
+            {"worker_id": f"a{i:02d}", "summary": "done",
+             "point": "setup", "phase": "dev", "status": "done"}
+            for i in range(11)
+        ])
+        result = v.verify_from_json(raw)
+        assert result.passed is True
+
+    def test_verify_from_json_invalid_json(self):
+        v = Gate11Verifier()
+        result = v.verify_from_json("not json")
+        assert result.passed is False
+        assert any("Invalid JSON" in e for e in result.errors)
+
+    def test_verify_from_json_not_list(self):
+        v = Gate11Verifier()
+        result = v.verify_from_json('{"not": "a list"}')
+        assert result.passed is False
+        assert any("JSON array" in e for e in result.errors)
+
+    def test_verify_not_enough_agents(self):
+        v = Gate11Verifier()
+        result = v.verify([])
+        assert result.passed is False
+        assert any("Not enough agents" in e for e in result.errors)
+
+    def test_handoff_validation_without_missing_worker(self):
+        """Missing worker_id -> defaults to 'unknown'."""
+        v = Gate11Verifier()
+        h = {"summary": "done", "point": "p", "phase": "ph"}
+        v_result = v.validate_handoff(h, "unknown")
+        assert not v_result.valid
+        assert any("worker_id" in e for e in v_result.errors)

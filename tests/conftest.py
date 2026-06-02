@@ -18,14 +18,32 @@ def db_path(tmp_path: Path) -> str:
 
 @pytest.fixture
 def statedb(db_path: str):
-    """StateDB fixture — opens a fresh SQLite DB with WAL mode and all tables."""
+    """StateDB fixture — creates a fresh SQLite DB with WAL mode and all tables.
+
+    StateDB.__init__ already runs _init_db() which creates all tables.
+    We yield the db and close+delete the file on teardown.
+    """
+    import os
+
     from engine.state_machine import StateDB
     db = StateDB(db_path)
-    db.open()
-    db.ensure_schema()
-    yield db
-    db.close()
 
+    # Verify the database was initialised properly
+    with db.cursor() as cur:
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {row["name"] for row in cur.fetchall()}
+        assert "phase_state" in tables, "phase_state table missing"
+        assert "point_state" in tables, "point_state table missing"
+        assert "yolo_state" in tables, "yolo_state table missing"
+        assert "event_log" in tables, "event_log table missing"
+
+    yield db
+
+    # Clean up: remove the file on teardown
+    try:
+        os.unlink(db_path)
+    except OSError:
+        pass
 
 @pytest.fixture
 def phase_machine(statedb):

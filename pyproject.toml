@@ -34,6 +34,9 @@ dependencies = [
     "click>=8.1",
 ]
 
+[project.scripts]
+hsl = "engine.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/DominikKrawczyk/hermes-swarm-loop"
 Repository = "https://github.com/DominikKrawczyk/hermes-swarm-loop"
