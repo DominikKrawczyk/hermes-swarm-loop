@@ -116,17 +116,20 @@ class ConnectionPool(Generic[T]):
     @property
     def size(self) -> int:
         """Total number of connections (idle + in-use)."""
-        return len(self._pool) + len(self._in_use)
+        with self._lock:
+            return len(self._pool) + len(self._in_use)
 
     @property
     def idle(self) -> int:
         """Number of idle connections ready for reuse."""
-        return len(self._pool)
+        with self._lock:
+            return len(self._pool)
 
     @property
     def in_use(self) -> int:
         """Number of connections currently in use."""
-        return len(self._in_use)
+        with self._lock:
+            return len(self._in_use)
 
     @property
     def stats(self) -> PoolStats:
@@ -194,10 +197,12 @@ class ConnectionPool(Generic[T]):
                     return c
 
             # At capacity — wait for a release
-            self._waits += 1
+            with self._lock:
+                self._waits += 1
             remaining = deadline - time.monotonic()
             if remaining <= 0:
-                self._timeouts += 1
+                with self._lock:
+                    self._timeouts += 1
                 raise ConnectionTimeoutError(
                     f"Timeout after {timeout or self.acquire_timeout}s"
                 )
@@ -213,7 +218,9 @@ class ConnectionPool(Generic[T]):
         ``PooledConnection`` and made available for reuse.
         """
         with self._lock:
-            self._pool.append(PooledConnection(conn, self))
+            # Dedup: avoid adding the same resource twice
+            if not any(c.resource is conn for c in self._pool):
+                self._pool.append(PooledConnection(conn, self))
             self._available_event.set()
 
     @contextmanager
@@ -254,6 +261,8 @@ class ConnectionPool(Generic[T]):
         with self._lock:
             self._closed = True
             self._evict_all_idle()
+            for c in self._in_use:
+                self._discard_internal(c)
             self._in_use.clear()
             self._available_event.set()
 

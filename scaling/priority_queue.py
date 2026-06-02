@@ -8,6 +8,22 @@ from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")
 
+
+class QueueEmpty(IndexError):
+    """Raised when trying to get from an empty queue (non-blocking)."""
+    pass
+
+
+class QueueFull(IndexError):
+    """Raised when trying to put to a full queue (non-blocking)."""
+    pass
+
+
+class QueueTimeout(TimeoutError):
+    """Raised when a blocking put/get times out."""
+    pass
+
+
 @dataclass(order=True)
 class PriorityItem(Generic[T]):
     priority: int | float = field(compare=True)
@@ -37,7 +53,9 @@ class PriorityQueue(Generic[T]):
         self._not_full = threading.Condition(self._lock)
 
     @property
-    def size(self): return len(self._heap)
+    def size(self):
+        with self._lock:
+            return len(self._heap)
     def __len__(self): return self.size
     def full(self):
         if self.maxsize <= 0: return False
@@ -52,38 +70,49 @@ class PriorityQueue(Generic[T]):
         with self._not_full:
             if self.maxsize > 0:
                 if not block:
-                    if len(self._heap) >= self.maxsize: raise ValueError("Queue full")
+                    if len(self._heap) >= self.maxsize:
+                        raise QueueFull("Queue full")
                 else:
                     deadline = None if timeout is None else time.monotonic() + timeout
                     while len(self._heap) >= self.maxsize:
                         remaining = deadline - time.monotonic() if deadline else None
-                        if remaining is not None and remaining <= 0: raise ValueError(f"Timeout {timeout}s")
+                        if remaining is not None and remaining <= 0:
+                            raise QueueTimeout(f"Timeout {timeout}s")
                         self._not_full.wait(timeout=remaining)
-            self._sequence += 1; heapq.heappush(self._heap, pitem); self._total_put += 1; self._not_empty.notify()
+            self._sequence += 1
+            heapq.heappush(self._heap, pitem)
+            self._total_put += 1
+            self._not_empty.notify()
 
     def get(self, block=True, timeout=None):
         with self._not_empty:
             if not block:
-                if not self._heap: raise ValueError("Queue empty")
+                if not self._heap: raise QueueEmpty("Queue empty")
             else:
                 deadline = None if timeout is None else time.monotonic() + timeout
                 while not self._heap:
                     remaining = deadline - time.monotonic() if deadline else None
-                    if remaining is not None and remaining <= 0: raise ValueError(f"Timeout {timeout}s")
+                    if remaining is not None and remaining <= 0: raise QueueTimeout(f"Timeout {timeout}s")
                     self._not_empty.wait(timeout=remaining)
-            pitem = heapq.heappop(self._heap); self._total_get += 1; self._not_full.notify(); return pitem.item
+            pitem = heapq.heappop(self._heap)
+            self._total_get += 1
+            self._not_full.notify()
+            return pitem.item
 
     def get_with_priority(self, block=True, timeout=None):
         with self._not_empty:
             if not block:
-                if not self._heap: raise ValueError("Queue empty")
+                if not self._heap: raise QueueEmpty("Queue empty")
             else:
                 deadline = None if timeout is None else time.monotonic() + timeout
                 while not self._heap:
                     remaining = deadline - time.monotonic() if deadline else None
-                    if remaining is not None and remaining <= 0: raise ValueError(f"Timeout {timeout}s")
+                    if remaining is not None and remaining <= 0: raise QueueTimeout(f"Timeout {timeout}s")
                     self._not_empty.wait(timeout=remaining)
-            pitem = heapq.heappop(self._heap); self._total_get += 1; self._not_full.notify(); return pitem
+            pitem = heapq.heappop(self._heap)
+            self._total_get += 1
+            self._not_full.notify()
+            return pitem
 
     # -- Test-compatibility aliases --------------------------------------------
 
@@ -96,7 +125,9 @@ class PriorityQueue(Generic[T]):
         with self._not_empty:
             if not self._heap:
                 return None
-            pitem = heapq.heappop(self._heap); self._total_get += 1; self._not_full.notify()
+            pitem = heapq.heappop(self._heap)
+            self._total_get += 1
+            self._not_full.notify()
             return pitem.item
 
     @property
@@ -120,7 +151,9 @@ class PriorityQueue(Generic[T]):
             return False
 
     def clear(self):
-        with self._lock: self._heap.clear(); self._not_full.notify_all()
+        with self._lock:
+            self._heap.clear()
+            self._not_full.notify_all()
 
     def priorities(self) -> Sequence[int | float]:
         with self._lock: return sorted({-p.priority for p in self._heap})
