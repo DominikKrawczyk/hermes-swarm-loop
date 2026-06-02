@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from enum import Enum, auto
 
 
@@ -61,6 +62,7 @@ class QueuePressure:
             raise ValueError(f"max_depth must be > 0, got {max_depth}")
         self.max_depth = max_depth
         self._depth = 0
+        self._lock = threading.Lock()
 
     def record(self, depth: int) -> None:
         """Record the current queue depth.
@@ -70,14 +72,16 @@ class QueuePressure:
         """
         if depth < 0:
             raise ValueError(f"depth must be >= 0, got {depth}")
-        self._depth = depth
+        with self._lock:
+            self._depth = depth
 
     @property
     def pressure_ratio(self) -> float:
         """Pressure ratio as depth / max_depth, clamped to [0.0, 1.0]."""
-        if self.max_depth <= 0:
-            return 0.0
-        return min(self._depth / self.max_depth, 1.0)
+        with self._lock:
+            if self.max_depth <= 0:
+                return 0.0
+            return min(self._depth / self.max_depth, 1.0)
 
     @property
     def pressure_level(self) -> PressureLevel:
@@ -104,11 +108,13 @@ class QueuePressure:
 
     @property
     def current_depth(self) -> int:
-        return self._depth
+        with self._lock:
+            return self._depth
 
     def reset(self) -> None:
         """Reset the recorded depth to 0."""
-        self._depth = 0
+        with self._lock:
+            self._depth = 0
 
     def __repr__(self) -> str:
         return (

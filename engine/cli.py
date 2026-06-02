@@ -30,41 +30,28 @@ _HERE = Path(__file__).resolve().parent
 _PROJECT_ROOT = _HERE.parent
 
 try:
-    from engine.state_machine import (
-        ConflictError,
-        PhaseMachine,
-        PointMachine,
-        StateDB,
-        YOLOMachine,
-        YOLO_ZONES,
-        PhaseEntry,
-        PointEntry,
-        YOLOState,
-    )
-    from engine.mastery_gate import MasteryGate, ScoreCard, score_from_dict, DIMENSIONS
-    from engine.gate_11 import Gate11Verifier
-    from engine.workspace_manager import WorkspaceManager, WorkspaceKind
-    from engine.synthesizer import synthesize, write_artifact
-    from engine.config import load_config
+    # When installed as a package, imports resolve normally
+    from engine import state_machine, mastery_gate, gate_11, workspace_manager, synthesizer, config as cfg_mod
 except ImportError:
     # Allow running from source without installing the package
     sys.path.insert(0, str(_PROJECT_ROOT))
-    from engine.state_machine import (
-        ConflictError,
-        PhaseMachine,
-        PointMachine,
-        StateDB,
-        YOLOMachine,
-        YOLO_ZONES,
-        PhaseEntry,
-        PointEntry,
-        YOLOState,
-    )
-    from engine.mastery_gate import MasteryGate, ScoreCard, score_from_dict, DIMENSIONS
-    from engine.gate_11 import Gate11Verifier
-    from engine.workspace_manager import WorkspaceManager, WorkspaceKind
-    from engine.synthesizer import synthesize, write_artifact
-    from engine.config import load_config
+
+from engine.state_machine import (
+    ConflictError,
+    PhaseMachine,
+    PointMachine,
+    StateDB,
+    YOLOMachine,
+    YOLO_ZONES,
+    PhaseEntry,
+    PointEntry,
+    YOLOState,
+)
+from engine.mastery_gate import MasteryGate, ScoreCard, score_from_dict, DIMENSIONS
+from engine.gate_11 import Gate11Verifier
+from engine.workspace_manager import WorkspaceManager, WorkspaceKind
+from engine.synthesizer import synthesize, write_artifact
+from engine.config import load_config
 
 # ---------------------------------------------------------------------------
 # Console output helpers
@@ -156,7 +143,7 @@ def phase_start(ctx: click.Context, phase_name: str) -> None:
         )
     except ValueError as exc:
         console.print(f"[red]Error:[/red] {exc}")
-        raise sys.exit(1) from exc
+        sys.exit(1)
 
 
 @phase.command(name="complete")
@@ -174,10 +161,10 @@ def phase_complete(ctx: click.Context, phase_name: str) -> None:
         )
     except ConflictError as exc:
         console.print(f"[red]Conflict:[/red] {exc}")
-        raise sys.exit(1) from exc
+        sys.exit(1)
     except ValueError as exc:
         console.print(f"[red]Error:[/red] {exc}")
-        raise sys.exit(1) from exc
+        sys.exit(1)
 
 
 @phase.command(name="list")
@@ -243,7 +230,7 @@ def point_create(ctx: click.Context, phase_name: str, point_name: str, agents: i
         )
     except ValueError as exc:
         console.print(f"[red]Error:[/red] {exc}")
-        raise sys.exit(1) from exc
+        sys.exit(1)
 
 
 @point.command(name="complete")
@@ -262,7 +249,7 @@ def point_complete(ctx: click.Context, phase_name: str, point_name: str) -> None
         )
     except ConflictError as exc:
         console.print(f"[red]Conflict:[/red] {exc}")
-        raise sys.exit(1) from exc
+        sys.exit(1)
 
 
 @point.command(name="list")
@@ -337,7 +324,7 @@ def yolo_set(ctx: click.Context, zone_name: str) -> None:
         )
     except ValueError as exc:
         console.print(f"[red]Error:[/red] {exc}")
-        raise sys.exit(1) from exc
+        sys.exit(1)
 
 
 @yolo.command(name="status")
@@ -453,7 +440,7 @@ def gate_evaluate(
             data = json.loads(raw)
         except json.JSONDecodeError as exc:
             console.print(f"[red]Invalid JSON:[/red] {exc}")
-            raise sys.exit(1) from exc
+            sys.exit(1)
         if isinstance(data, dict):
             data = [data]
         agent_scores = [score_from_dict(d) for d in data]
@@ -539,7 +526,7 @@ def workspace_create(
         )
     except Exception as exc:
         console.print(f"[red]Error:[/red] {exc}")
-        raise sys.exit(1) from exc
+        sys.exit(1)
 
 
 @workspace.command(name="list")

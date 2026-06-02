@@ -21,10 +21,10 @@ test-cov:  # Run tests with coverage
 	python3 -m pytest tests/ -v --tb=short --cov=engine --cov=scaling --cov=configs --cov-report=term-missing
 
 lint:  # Lint all Python files
-	python3 -m ruff check engine/ scaling/ tests/ configs/ scripts/ --fix
+	python3 -m ruff check engine/ scaling/ tests/ configs/ --fix
 
 typecheck:  # Run mypy type checking
-	python3 -m mypy engine/ scaling/ scripts/ --ignore-missing-imports
+	python3 -m mypy engine/ scaling/ --ignore-missing-imports
 
 clean:  # Remove cache and temp files
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

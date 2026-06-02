@@ -206,7 +206,8 @@ class TestVerify:
         handoffs = [self._handoff(f"a{i:02d}") for i in range(12)]
         r = self.v.verify(handoffs)
         assert r.passed is True
-        assert r.total_agents == 11
+        assert r.total_agents == 12
+        assert r.completed_agents == 12
 
     def test_validations_list_populated(self):
         handoffs = [self._handoff(f"a{i:02d}") for i in range(11)]

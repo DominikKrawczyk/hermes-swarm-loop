@@ -52,6 +52,10 @@ class MasteryGate:
         if s.diversity < 0.5: g.append("diversity too concentrated")
         if s.correctness < 0.5: g.append("correctness below threshold")
         if s.safety < 0.5: g.append("safety concerns")
+        if s.test_coverage < 0.5: g.append("test_coverage below threshold")
+        if s.consistency < 0.5: g.append("consistency below threshold")
+        if s.efficiency < 0.5: g.append("efficiency below threshold")
+        if s.clarity < 0.5: g.append("clarity below threshold")
         return g
     def as_dict(self, phase, point, score, agents_used=1, time_seconds=0.0):
         return {"phase":phase,"point":point,"score":score.to_dict(),

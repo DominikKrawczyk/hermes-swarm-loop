@@ -159,7 +159,7 @@ class CircuitBreaker:
             raise CircuitBreakerOpenError("Circuit is OPEN")
         try:
             result = fn(*args, **kwargs)
-        except BaseException:
+        except Exception:
             self.record_failure()
             raise
         else:

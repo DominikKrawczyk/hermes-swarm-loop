@@ -193,8 +193,9 @@ class ConnectionPool(Generic[T]):
                     self._in_use.add(c)
                     return c
 
+                self._waits += 1
+
             # At capacity — wait for a release
-            self._waits += 1
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 self._timeouts += 1

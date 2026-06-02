@@ -16,7 +16,7 @@ zones:
   test:
     label: "Test"
     description: "Auto-approve all actions, limited parallelism"
-    auto_approve: true
+    auto_approve: false
     max_parallel: 11
     safety_valve_enabled: true
     nested_check: true

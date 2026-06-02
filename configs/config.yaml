@@ -34,7 +34,7 @@ yolo:
       auto_approve: false
     test:
       max_parallel: 11
-      auto_approve: true
+      auto_approve: false
     staging:
       max_parallel: 33
       auto_approve: true

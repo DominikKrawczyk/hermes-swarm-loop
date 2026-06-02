@@ -104,7 +104,10 @@ class TestMasteryGate:
 
     def test_check_diversification_passes(self):
         gate = MasteryGate()
-        sc = ScoreCard(diversity=0.8, correctness=0.9, safety=0.9)
+        sc = ScoreCard(
+            diversity=0.8, correctness=0.9, safety=0.9,
+            test_coverage=0.8, consistency=0.8, efficiency=0.8, clarity=0.8,
+        )
         gaps = gate.check_diversification(sc)
         assert len(gaps) == 0
 

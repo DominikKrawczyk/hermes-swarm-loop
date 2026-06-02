@@ -44,7 +44,6 @@ class TestStateDB:
         try:
             with db.cursor() as cur:
                 cur.execute("INSERT INTO phase_state (phase, status) VALUES ('test', 'todo')")
-                cur.connection.commit()
             with db.cursor() as cur:
                 cur.execute("SELECT COUNT(*) as cnt FROM phase_state")
                 assert cur.fetchone()["cnt"] == 1
@@ -437,7 +436,7 @@ class TestPointMachineExtended:
             pt_m.create_point("development", "setup")
             pt_m.start_point("development", "setup")
             import pytest
-            with pytest.raises(ConflictError):
+            with pytest.raises(ConflictError, match="not in todo state"):
                 pt_m.start_point("development", "setup")  # already running
         finally:
             try: os.unlink(path)
@@ -582,8 +581,8 @@ class TestPhaseLifecycle:
         try:
             pm = PhaseMachine(db)
             import pytest
-            with pytest.raises(ConflictError, match="not in running"):
-                pm.fail_phase("development")
+            with pytest.raises(ConflictError, match="not found|not in running"):
+                pm.fail_phase("development")  # not started
         finally:
             try: os.unlink(path)
             except OSError: pass
@@ -618,8 +617,8 @@ class TestPhaseLifecycle:
             pm = PhaseMachine(db)
             pm.start_phase("development")
             import pytest
-            with pytest.raises(ConflictError, match="not done or failed"):
-                pm.archive_phase("development")
+            with pytest.raises(ConflictError, match="needs one of|not done or failed"):
+                pm.archive_phase("development")  # still running
         finally:
             try: os.unlink(path)
             except OSError: pass
@@ -657,7 +656,7 @@ class TestPointLifecycle:
             ptm.create_point("development", "architecture")
             ptm.start_point("development", "architecture")
             import pytest
-            with pytest.raises(ConflictError, match="not in todo"):
+            with pytest.raises(ConflictError, match="not in todo state"):
                 ptm.start_point("development", "architecture")
         finally:
             try: os.unlink(path)
@@ -688,7 +687,7 @@ class TestPointLifecycle:
             ptm.start_point("development", "setup")
             ptm.complete_point("development", "setup")
             import pytest
-            with pytest.raises(ConflictError, match="not running"):
+            with pytest.raises(ConflictError, match="needs one of|not running"):
                 ptm.fail_point("development", "setup")
         finally:
             try: os.unlink(path)
@@ -767,7 +766,7 @@ class TestStateMachineEdgeCases:
             ptm.complete_point("development", "p1")  # running -> done
             import pytest
             # done -> done is not allowed (not running/todo)
-            with pytest.raises(ConflictError, match="Cannot complete"):
+            with pytest.raises(ConflictError, match="Cannot update|Cannot complete"):
                 ptm.complete_point("development", "p1")
         finally:
             try: os.unlink(path)
@@ -781,7 +780,7 @@ class TestStateMachineEdgeCases:
             pm = PhaseMachine(db)
             pm.start_phase("development")
             ptm = PointMachine(db)
-            with pytest.raises(ConflictError, match="Cannot complete"):
+            with pytest.raises(ConflictError, match="not found|Cannot complete"):
                 ptm.complete_point("development", "nonexistent")
         finally:
             try: os.unlink(path)
@@ -794,7 +793,7 @@ class TestStateMachineEdgeCases:
             pm = PhaseMachine(db)
             pm.start_phase("development")
             ptm = PointMachine(db)
-            with pytest.raises(ConflictError, match="Cannot fail"):
+            with pytest.raises(ConflictError, match="not found|Cannot fail"):
                 ptm.fail_point("development", "ghost")
         finally:
             try: os.unlink(path)

@@ -24,6 +24,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 import tempfile
+import threading
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -93,6 +94,7 @@ class WorkspaceManager:
         self._root = Path(workspace_root)
         self._main_repo = Path(main_repo) if main_repo else None
         self._active: dict[str, Workspace] = {}
+        self._lock = threading.Lock()
 
     # ------------------------------------------------------------------
     # Public API
@@ -150,18 +152,21 @@ class WorkspaceManager:
         elif workspace.kind == WorkspaceKind.WORKTREE and cleanup:
             self._teardown_worktree(workspace)
         # DIR workspaces are never cleaned up by us.
-        self._active.pop(str(workspace.path), None)
+        with self._lock:
+            self._active.pop(str(workspace.path), None)
 
     def current_task_workspace(self, task_id: str) -> Workspace | None:
         """Return the active workspace for *task_id*, if any."""
-        for ws in self._active.values():
-            if ws.label == task_id:
-                return ws
+        with self._lock:
+            for ws in self._active.values():
+                if ws.label == task_id:
+                    return ws
         return None
 
     def list_active(self) -> list[Workspace]:
         """Return a snapshot of all currently-active workspaces."""
-        return list(self._active.values())
+        with self._lock:
+            return list(self._active.values())
 
     # ------------------------------------------------------------------
     # Scratch workspaces
@@ -179,7 +184,8 @@ class WorkspaceManager:
             path=path.resolve(),
             label=label,
         )
-        self._active[str(path)] = ws
+        with self._lock:
+            self._active[str(path)] = ws
         return ws
 
     @staticmethod
@@ -241,7 +247,8 @@ class WorkspaceManager:
             branch=branch,
             metadata={"repo": str(repo)},
         )
-        self._active[str(worktree_dir)] = ws
+        with self._lock:
+            self._active[str(worktree_dir)] = ws
         return ws
 
     def _teardown_worktree(self, workspace: Workspace) -> None:

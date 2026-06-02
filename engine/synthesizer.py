@@ -48,6 +48,18 @@ def synthesize(
                 seen_keys.add(key)
                 all_findings.append(finding)
 
+    # Defensive dedup_count: handle non-list output types (e.g. str, dict)
+    total_output_items = 0
+    for o in completed:
+        raw = o.get("output")
+        if isinstance(raw, list):
+            total_output_items += len(raw)
+        elif isinstance(raw, dict):
+            inner = raw.get("findings", [])
+            total_output_items += len(inner) if isinstance(inner, list) else 1
+        elif raw is not None:
+            total_output_items += 1
+
     merged = {
         "merged_findings": all_findings,
         "agent_count": len(agent_outputs),
@@ -55,8 +67,8 @@ def synthesize(
         "failed_count": len(failed),
         "synthesis_timestamp": datetime.now(timezone.utc).isoformat(),
         "synthesis_plan": synthesis_plan,
-        "dedup_count": sum(len(o.get("output", [])) for o in completed) - len(all_findings)
-        if isinstance(completed, list) and len(completed) > 0
+        "dedup_count": total_output_items - len(all_findings)
+        if completed
         else 0,
     }
 

@@ -39,7 +39,7 @@ DEFAULT_SCALING_CONFIG: dict[str, Any] = {
 DEFAULT_YOLO_CONFIG: dict[str, Any] = {
     "zones": {
         "safe": {"auto_approve": False, "max_parallel": 5},
-        "test": {"auto_approve": True, "max_parallel": 11},
+        "test": {"auto_approve": False, "max_parallel": 11},
         "staging": {"auto_approve": True, "max_parallel": 33},
         "production": {"auto_approve": True, "max_parallel": 999},
     },

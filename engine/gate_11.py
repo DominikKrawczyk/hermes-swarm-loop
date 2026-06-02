@@ -49,6 +49,10 @@ class GateResult:
             "completed_agents": self.completed_agents,
             "errors": self.errors,
             "all_done": self.all_done,
+            "validations": [
+                {"worker_id": v.worker_id, "valid": v.valid, "errors": v.errors}
+                for v in self.validations
+            ],
         }
 
 
@@ -79,7 +83,7 @@ class Gate11Verifier:
         """Verify that all 11 agents completed with valid handoffs."""
         result = GateResult(
             passed=False,
-            total_agents=self.REQUIRED_COUNT,
+            total_agents=max(len(handoffs), self.REQUIRED_COUNT),
             completed_agents=len(handoffs),
         )
 

@@ -39,11 +39,16 @@ def statedb(db_path: str):
 
     yield db
 
-    # Clean up: remove the file on teardown
+    # Clean up: remove the file and any WAL/SHM sidecars on teardown
     try:
         os.unlink(db_path)
     except OSError:
         pass
+    for ext in (".db-shm", ".db-wal"):
+        try:
+            os.unlink(db_path + ext)
+        except OSError:
+            pass
 
 @pytest.fixture
 def phase_machine(statedb):
