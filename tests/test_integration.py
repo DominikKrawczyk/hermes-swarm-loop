@@ -125,12 +125,12 @@ class TestPhasePointIntegration:
         assert entry.status == "done"
 
     def test_phase_idempotency(self, state_db):
-        """Starting an already-running phase is idempotent."""
+        """Starting an already-running phase raises ConflictError (no double-start)."""
         pm = PhaseMachine(state_db)
         pm.start_phase("hunting")
-        pm.start_phase("hunting")
-        entry = pm.get_phase("hunting")
-        assert entry.status == "running"
+        import pytest
+        with pytest.raises(ConflictError):
+            pm.start_phase("hunting")
 
     def test_complete_phase_after_all_points(self, state_db):
         """Complete a phase after all its points are done."""
@@ -147,7 +147,7 @@ class TestPhasePointIntegration:
     def test_phase_requires_running_to_complete(self, state_db):
         """Completing a phase that isn't running raises ConflictError."""
         pm = PhaseMachine(state_db)
-        with pytest.raises(ConflictError, match="not in running"):
+        with pytest.raises(ConflictError, match="not found|not running|not in running"):
             pm.complete_phase("development")
 
     def test_all_phases_order(self, state_db):

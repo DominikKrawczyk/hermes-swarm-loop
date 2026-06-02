@@ -16,7 +16,7 @@ import sqlite3
 import threading
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 # ─── Dataclasses ─────────────────────────────────────────────────
@@ -108,17 +108,6 @@ class StateDB:
         payload TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
-    CREATE TABLE IF NOT EXISTS launch_config (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        project_name TEXT NOT NULL,
-        project_desc TEXT,
-        phase TEXT NOT NULL,
-        yolo_zone TEXT NOT NULL DEFAULT 'test',
-        max_agents INTEGER NOT NULL DEFAULT 11,
-        init_only INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
     """
 
     def __init__(self, db_path: str):
@@ -137,28 +126,6 @@ class StateDB:
             )
             conn.commit()
             conn.close()
-
-    def open(self):
-        """Idempotent open — schema is already created in __init__.
-
-        Provided for conftest compatibility (fixtures may call open/close
-        lifecycle before/after tests).
-        """
-        pass
-
-    def ensure_schema(self):
-        """Idempotent schema creation — already done in _init_db.
-
-        Provided for conftest compatibility.
-        """
-        pass
-
-    def close(self):
-        """No-op close — connections are short-lived per cursor() call.
-
-        Provided for conftest compatibility.
-        """
-        pass
 
     @contextmanager
     def cursor(self):
@@ -209,49 +176,84 @@ class PhaseMachine:
     def start_phase(self, phase: str) -> PhaseEntry:
         if phase not in self.ALL_PHASES:
             raise ValueError(f"Unknown phase: {phase}. Valid: {self.ALL_PHASES}")
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         with self._db.cursor() as c:
+            # Read current status + version before upsert for CAS guard
             c.execute(
-                "INSERT INTO phase_state (phase, status, started_at, version) "
-                "VALUES (?, 'running', ?, 1) "
-                "ON CONFLICT(phase) DO UPDATE SET "
-                "  status=COALESCE(NULLIF(status, 'done'), 'running'), "
-                "  started_at=COALESCE(started_at, ?), "
-                "  version=version+1",
-                (phase, now, now)
+                "SELECT status, version FROM phase_state WHERE phase=?", (phase,)
             )
+            existing = c.fetchone()
+            if existing is not None:
+                current_status = existing["status"]
+                # Terminal states (done, archived) must NOT be restartable
+                if current_status in ("done", "archived"):
+                    raise ConflictError(
+                        f"Cannot start phase '{phase}': status is '{current_status}' (terminal)"
+                    )
+                # Already-running phases must NOT be restarted (would bump version silently)
+                if current_status == "running":
+                    raise ConflictError(
+                        f"Cannot start phase '{phase}': already running"
+                    )
+                expected_version = existing["version"]
+                c.execute(
+                    "UPDATE phase_state SET status='running', "
+                    "  started_at=COALESCE(started_at, ?), version=version+1 "
+                    "WHERE phase=? AND status!='running' AND version=?",
+                    (now, phase, expected_version)
+                )
+                if c.rowcount == 0:
+                    raise ConflictError(
+                        f"Cannot start phase '{phase}': version conflict"
+                    )
+            else:
+                c.execute(
+                    "INSERT INTO phase_state (phase, status, started_at, version) "
+                    "VALUES (?, 'running', ?, 1)",
+                    (phase, now)
+                )
             c.execute("SELECT * FROM phase_state WHERE phase=?", (phase,))
             row = c.fetchone()
         self._db.log_event("phase_started", {"phase": phase})
         return PhaseEntry(**dict(row))
 
     def fail_phase(self, phase: str, reason: str = "") -> PhaseEntry:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         with self._db.cursor() as c:
+            c.execute("SELECT version FROM phase_state WHERE phase=?", (phase,))
+            row = c.fetchone()
+            if row is None:
+                raise ConflictError(f"Phase '{phase}' not found")
+            expected_version = row["version"]
             c.execute(
                 "UPDATE phase_state SET status='failed', completed_at=?, version=version+1 "
-                "WHERE phase=? AND status='running'",
-                (now, phase)
+                "WHERE phase=? AND status='running' AND version=?",
+                (now, phase, expected_version)
             )
             if c.rowcount == 0:
                 raise ConflictError(
-                    f"Cannot fail phase '{phase}': not in running state"
+                    f"Cannot fail phase '{phase}': not in running state or version conflict"
                 )
             c.execute("SELECT * FROM phase_state WHERE phase=?", (phase,))
             row = c.fetchone()
-        self._db.log_event("phase_failed", {"phase": phase, "reason": reason})
+        self._db.log_event("phase_failed", {"phase": phase, "reason": reason[:500]})
         return PhaseEntry(**dict(row))
 
     def archive_phase(self, phase: str) -> PhaseEntry:
         with self._db.cursor() as c:
+            c.execute("SELECT version FROM phase_state WHERE phase=?", (phase,))
+            row = c.fetchone()
+            if row is None:
+                raise ConflictError(f"Phase '{phase}' not found")
+            expected_version = row["version"]
             c.execute(
                 "UPDATE phase_state SET status='archived', version=version+1 "
-                "WHERE phase=? AND (status='done' OR status='failed')",
-                (phase,)
+                "WHERE phase=? AND (status='done' OR status='failed') AND version=?",
+                (phase, expected_version)
             )
             if c.rowcount == 0:
                 raise ConflictError(
-                    f"Cannot archive phase '{phase}': not done or failed"
+                    f"Cannot archive phase '{phase}': not done/failed or version conflict"
                 )
             c.execute("SELECT * FROM phase_state WHERE phase=?", (phase,))
             row = c.fetchone()
@@ -259,16 +261,21 @@ class PhaseMachine:
         return PhaseEntry(**dict(row))
 
     def complete_phase(self, phase: str) -> PhaseEntry:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         with self._db.cursor() as c:
+            c.execute("SELECT version FROM phase_state WHERE phase=?", (phase,))
+            row = c.fetchone()
+            if row is None:
+                raise ConflictError(f"Phase '{phase}' not found")
+            expected_version = row["version"]
             c.execute(
                 "UPDATE phase_state SET status='done', completed_at=?, version=version+1 "
-                "WHERE phase=? AND status='running'",
-                (now, phase)
+                "WHERE phase=? AND status='running' AND version=?",
+                (now, phase, expected_version)
             )
             if c.rowcount == 0:
                 raise ConflictError(
-                    f"Cannot complete phase '{phase}': not in running state"
+                    f"Cannot complete phase '{phase}': not running or version conflict"
                 )
             c.execute("SELECT * FROM phase_state WHERE phase=?", (phase,))
             row = c.fetchone()
@@ -294,34 +301,51 @@ class PointMachine:
         self._db = db
 
     def create_point(self, phase: str, point: str, agent_count: int = 11) -> PointEntry:
-        now = datetime.utcnow().isoformat()
         with self._db.cursor() as c:
-            c.execute(
-                "INSERT INTO point_state (phase, point, status, agent_count, started_at, version) "
-                "VALUES (?, ?, 'todo', ?, NULL, 1) "
-                "ON CONFLICT(phase, point) DO UPDATE SET "
-                "  status='todo', "
-                "  started_at=NULL, "
-                "  completed_at=NULL, "
-                "  version=version+1",
-                (phase, point, agent_count)
-            )
+            c.execute("SELECT version FROM point_state WHERE phase=? AND point=?", (phase, point))
+            existing = c.fetchone()
+            if existing is not None:
+                expected_version = existing["version"]
+                c.execute(
+                    "UPDATE point_state SET status='todo', started_at=NULL, completed_at=NULL, "
+                    "  agent_count=?, version=version+1 "
+                    "WHERE phase=? AND point=? AND version=?",
+                    (agent_count, phase, point, expected_version)
+                )
+                if c.rowcount == 0:
+                    raise ConflictError(
+                        f"Cannot reset point '{phase}/{point}': version conflict"
+                    )
+            else:
+                c.execute(
+                    "INSERT INTO point_state (phase, point, status, agent_count, started_at, version) "
+                    "VALUES (?, ?, 'todo', ?, NULL, 1)",
+                    (phase, point, agent_count)
+                )
             c.execute("SELECT * FROM point_state WHERE phase=? AND point=?", (phase, point))
             row = c.fetchone()
         self._db.log_event("point_created", {"phase": phase, "point": point})
         return PointEntry(**dict(row))
 
     def start_point(self, phase: str, point: str) -> PointEntry:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         with self._db.cursor() as c:
             c.execute(
+                "SELECT version FROM point_state WHERE phase=? AND point=?",
+                (phase, point)
+            )
+            row = c.fetchone()
+            if row is None:
+                raise ConflictError(f"Point '{phase}/{point}' not found")
+            expected_version = row["version"]
+            c.execute(
                 "UPDATE point_state SET status='running', started_at=?, version=version+1 "
-                "WHERE phase=? AND point=? AND status='todo'",
-                (now, phase, point)
+                "WHERE phase=? AND point=? AND status='todo' AND version=?",
+                (now, phase, point, expected_version)
             )
             if c.rowcount == 0:
                 raise ConflictError(
-                    f"Cannot start point '{phase}/{point}': not in todo state"
+                    f"Cannot start point '{phase}/{point}': not in todo state or version conflict"
                 )
             c.execute("SELECT * FROM point_state WHERE phase=? AND point=?", (phase, point))
             row = c.fetchone()
@@ -329,16 +353,24 @@ class PointMachine:
         return PointEntry(**dict(row))
 
     def complete_point(self, phase: str, point: str) -> PointEntry:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         with self._db.cursor() as c:
             c.execute(
+                "SELECT version FROM point_state WHERE phase=? AND point=?",
+                (phase, point)
+            )
+            row = c.fetchone()
+            if row is None:
+                raise ConflictError(f"Point '{phase}/{point}' not found")
+            expected_version = row["version"]
+            c.execute(
                 "UPDATE point_state SET status='done', completed_at=?, version=version+1 "
-                "WHERE phase=? AND point=? AND (status='running' OR status='todo')",
-                (now, phase, point)
+                "WHERE phase=? AND point=? AND (status='running' OR status='todo') AND version=?",
+                (now, phase, point, expected_version)
             )
             if c.rowcount == 0:
                 raise ConflictError(
-                    f"Cannot complete point '{phase}/{point}': not running or todo"
+                    f"Cannot complete point '{phase}/{point}': not running/todo or version conflict"
                 )
             c.execute("SELECT * FROM point_state WHERE phase=? AND point=?", (phase, point))
             row = c.fetchone()
@@ -346,20 +378,28 @@ class PointMachine:
         return PointEntry(**dict(row))
 
     def fail_point(self, phase: str, point: str, reason: str = "") -> PointEntry:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         with self._db.cursor() as c:
             c.execute(
+                "SELECT version FROM point_state WHERE phase=? AND point=?",
+                (phase, point)
+            )
+            row = c.fetchone()
+            if row is None:
+                raise ConflictError(f"Point '{phase}/{point}' not found")
+            expected_version = row["version"]
+            c.execute(
                 "UPDATE point_state SET status='failed', completed_at=?, version=version+1 "
-                "WHERE phase=? AND point=? AND (status='running' OR status='todo')",
-                (now, phase, point)
+                "WHERE phase=? AND point=? AND (status='running' OR status='todo') AND version=?",
+                (now, phase, point, expected_version)
             )
             if c.rowcount == 0:
                 raise ConflictError(
-                    f"Cannot fail point '{phase}/{point}': not running or todo"
+                    f"Cannot fail point '{phase}/{point}': not running/todo or version conflict"
                 )
             c.execute("SELECT * FROM point_state WHERE phase=? AND point=?", (phase, point))
             row = c.fetchone()
-        self._db.log_event("point_failed", {"phase": phase, "point": point, "reason": reason})
+        self._db.log_event("point_failed", {"phase": phase, "point": point, "reason": reason[:500]})
         return PointEntry(**dict(row))
 
     def get_point(self, phase: str, point: str) -> PointEntry | None:
@@ -397,10 +437,18 @@ class YOLOMachine:
             raise ValueError(f"Unknown YOLO zone: {zone}")
         cfg = YOLO_ZONES[zone]
         with self._db.cursor() as c:
+            c.execute("SELECT version FROM yolo_state WHERE id=1")
+            row = c.fetchone()
+            if row is None:
+                raise ConflictError("yolo_state row not found")
+            expected_version = row["version"]
             c.execute(
-                "UPDATE yolo_state SET zone=?, auto_approve=?, max_parallel=?, version=version+1 WHERE id=1",
-                (zone, int(cfg["auto_approve"]), cfg["max_parallel"])
+                "UPDATE yolo_state SET zone=?, auto_approve=?, max_parallel=?, version=version+1 "
+                "WHERE id=1 AND version=?",
+                (zone, int(cfg["auto_approve"]), cfg["max_parallel"], expected_version)
             )
+            if c.rowcount == 0:
+                raise ConflictError("Cannot set YOLO zone: version conflict")
             c.execute("SELECT * FROM yolo_state WHERE id=1")
             row = c.fetchone()
         self._db.log_event("yolo_zone_set", {"zone": zone})
@@ -414,18 +462,57 @@ class YOLOMachine:
 
     def increment_errors(self) -> YOLOState:
         with self._db.cursor() as c:
-            c.execute("UPDATE yolo_state SET consecutive_errors = consecutive_errors + 1, version=version+1 WHERE id=1")
+            c.execute("SELECT version FROM yolo_state WHERE id=1")
+            row = c.fetchone()
+            expected_version = row["version"]
+            c.execute(
+                "UPDATE yolo_state SET consecutive_errors = consecutive_errors + 1, version=version+1 "
+                "WHERE id=1 AND version=?",
+                (expected_version,)
+            )
+            if c.rowcount == 0:
+                raise ConflictError("Cannot increment errors: version conflict")
             c.execute("SELECT * FROM yolo_state WHERE id=1")
             row = c.fetchone()
-        s = YOLOState(**dict(row))
-        zone_cfg = YOLO_ZONES.get(s.zone, YOLO_ZONES["safe"])
-        if s.consecutive_errors >= zone_cfg["max_errors"]:
-            self.activate_safety_valve()
+            s = YOLOState(**dict(row))
+            zone_cfg = YOLO_ZONES.get(s.zone, YOLO_ZONES["safe"])
+            if s.consecutive_errors >= zone_cfg["max_errors"]:
+                # Inline activate_safety_valve inside the same cursor context
+                # to avoid deadlock (lock is threading.Lock, not RLock)
+                c.execute("SELECT version FROM yolo_state WHERE id=1")
+                expected_version = c.fetchone()["version"]
+                c.execute(
+                    "UPDATE yolo_state SET safety_valve_active=1, auto_approve=0, max_parallel=1, version=version+1 "
+                    "WHERE id=1 AND version=?",
+                    (expected_version,)
+                )
+                if c.rowcount == 0:
+                    raise ConflictError("Cannot activate safety valve: version conflict")
+                c.execute("SELECT * FROM yolo_state WHERE id=1")
+                row = c.fetchone()
+                s = YOLOState(**dict(row))
+                c.execute(
+                    "INSERT INTO event_log (kind, payload) VALUES (?, ?)",
+                    ("safety_valve_activated", "{}")
+                )
         return s
 
     def activate_safety_valve(self) -> YOLOState:
         with self._db.cursor() as c:
-            c.execute("UPDATE yolo_state SET safety_valve_active=1, auto_approve=0, max_parallel=1, version=version+1 WHERE id=1")
+            c.execute("SELECT version, safety_valve_active FROM yolo_state WHERE id=1")
+            row = c.fetchone()
+            if row["safety_valve_active"]:
+                # Already active — return current state without changing version
+                c.execute("SELECT * FROM yolo_state WHERE id=1")
+                return YOLOState(**dict(c.fetchone()))
+            expected_version = row["version"]
+            c.execute(
+                "UPDATE yolo_state SET safety_valve_active=1, auto_approve=0, max_parallel=1, version=version+1 "
+                "WHERE id=1 AND version=? AND safety_valve_active=0",
+                (expected_version,)
+            )
+            if c.rowcount == 0:
+                raise ConflictError("Cannot activate safety valve: version conflict")
             c.execute("SELECT * FROM yolo_state WHERE id=1")
             row = c.fetchone()
         self._db.log_event("safety_valve_activated", {})
@@ -449,8 +536,23 @@ class YOLOMachine:
 
     def reset_safety_valve(self) -> YOLOState:
         with self._db.cursor() as c:
-            c.execute("UPDATE yolo_state SET safety_valve_active=0, consecutive_errors=0, version=version+1 WHERE id=1")
+            c.execute("SELECT version, zone FROM yolo_state WHERE id=1")
+            row = c.fetchone()
+            if row is None:
+                raise ConflictError("yolo_state row not found")
+            expected_version = row["version"]
+            zone_name = row["zone"]
+            # Restore zone defaults for auto_approve and max_parallel
+            zone_cfg = YOLO_ZONES.get(zone_name, YOLO_ZONES["safe"])
+            c.execute(
+                "UPDATE yolo_state SET safety_valve_active=0, consecutive_errors=0, "
+                "auto_approve=?, max_parallel=?, version=version+1 "
+                "WHERE id=1 AND version=?",
+                (int(zone_cfg["auto_approve"]), zone_cfg["max_parallel"], expected_version)
+            )
+            if c.rowcount == 0:
+                raise ConflictError("Cannot reset safety valve: version conflict")
             c.execute("SELECT * FROM yolo_state WHERE id=1")
             row = c.fetchone()
-        self._db.log_event("safety_valve_reset", {})
+        self._db.log_event("safety_valve_reset", {"restored_zone": zone_name})
         return YOLOState(**dict(row))
