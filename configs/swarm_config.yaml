@@ -1,0 +1,139 @@
+# ─── Hermes Swarm Loop — Swarm Orchestration Configuration ───
+# Controls phase/point definitions, agent roles, gate thresholds
+
+# Phase pipeline definition
+# Each phase has 3 points, each point has N agents
+phases:
+  prd_build:
+    label: "PRD Build"
+    agents: 66           # 33 research + 33 build
+    points:
+      - research
+      - build
+      - synthesize
+  development:
+    label: "Development"
+    agents: 33           # 11 per point
+    points:
+      - architecture
+      - setup
+      - code_generation
+  quality:
+    label: "Quality"
+    agents: 33
+    points:
+      - audit
+      - improve
+      - review
+  hunting:
+    label: "Hunting"
+    agents: 33
+    points:
+      - bugs
+      - arch_review
+      - security
+  simplicity:
+    label: "Simplicity & Consolidation"
+    agents: 33
+    points:
+      - dead_code
+      - occam
+      - prd_alignment
+
+# Mastery Gate configuration
+# 7-dimension scoring with weighted average
+mastery_gate:
+  enabled: true
+  dimensions:
+    correctness:
+      label: "Correctness"
+      weight: 0.25
+      threshold: 0.70
+    safety:
+      label: "Safety"
+      weight: 0.20
+      threshold: 0.70
+    test_coverage:
+      label: "Test Coverage"
+      weight: 0.15
+      threshold: 0.70
+    consistency:
+      label: "Consistency"
+      weight: 0.15
+      threshold: 0.70
+    diversity:
+      label: "Diversity"
+      weight: 0.10
+      threshold: 0.70
+    efficiency:
+      label: "Efficiency"
+      weight: 0.10
+      threshold: 0.70
+    clarity:
+      label: "Clarity"
+      weight: 0.05
+      threshold: 0.70
+
+  verdicts:
+    pass:
+      min_score: 0.70
+      action: "proceed"
+    cross_check:
+      min_score: 0.50
+      action: "fix_and_recheck"
+    review:
+      min_score: 0.30
+      action: "abort_cycle"
+    block:
+      min_score: 0.0
+      action: "abort_cycle"
+
+  # Number of cross-check agents spawned for each gate evaluation
+  cross_check_agents: 3
+
+# Gate 11 verifier configuration
+# Runs after ALL 11 agents in a point complete
+gate_11:
+  enabled: true
+  json_schema_validation: true   # Validate handoff JSON schemas
+  require_all_complete: true     # Block if any agent hasn't finished
+  auto_block_on_failure: true    # Block point on verifier failure
+
+# Agent roles per phase
+roles:
+  development/architecture:
+    - domain_architect
+    - system_architect
+    - data_architect
+    - security_architect
+    - integration_architect
+    - performance_architect
+    - devops_architect
+    - api_architect
+    - database_architect
+    - ui_architect
+    - testing_architect
+  development/setup:
+    - project_init
+    - dependency_manager
+    - config_setup
+    - ci_setup
+    - build_engineer
+    - test_framework
+    - docker_setup
+    - git_setup
+    - lint_setup
+    - docs_setup
+    - env_setup
+  development/code_generation:
+    - core_dev
+    - api_dev
+    - data_layer_dev
+    - integration_dev
+    - test_dev
+    - cli_dev
+    - config_dev
+    - error_handler_dev
+    - logging_dev
+    - validation_dev
+    - docs_dev

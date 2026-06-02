@@ -1,0 +1,22 @@
+# Hermes Swarm Loop — Workspace Configuration
+# ============================================
+# Controls workspace lifecycle.
+
+workspace:
+  base_dir: "/opt/hermes-swarm-loop"
+  git_repo: "/opt/hermes-swarm-loop/.git"
+
+  kinds:
+    scratch:
+      description: "Ephemeral tmpdir per task — GC'd on archive"
+      default: true
+    dir:
+      description: "Persistent shared directory for long-lived state"
+      shared_path: null  # defaults to base_dir/shared/<task_id>
+    worktree:
+      description: "Git worktree for code changes with history"
+      branch_prefix: "wt/"
+
+  naming:
+    worktree_prefix: "wt/"
+    shared_prefix: "shared/"

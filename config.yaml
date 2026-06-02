@@ -1,0 +1,77 @@
+# =============================================================================
+# Hermes Swarm Loop — Root Configuration
+# =============================================================================
+# Top-level config consumed by the swarm runtime on startup.
+# Follows the Hermes agent config convention: hierarchical YAML with
+# sensible defaults and path references to sub-configs.
+
+# ---------------------------------------------------------------------------
+# Project metadata
+# ---------------------------------------------------------------------------
+project:
+  name: "Hermes Swarm Loop"
+  version: "0.1.0"
+  description: "Multi-agent orchestration framework with YOLO zone routing, adaptive scaling, and circuit-breaker resilience"
+
+# ---------------------------------------------------------------------------
+# Phase defaults — each phase in a task's lifecycle maps to a concurrency
+# profile and a YOLO zone.
+# ---------------------------------------------------------------------------
+phases:
+  defaults:
+    plan:
+      zone: safe
+      timeout_s: 120
+      max_retries: 2
+    execute:
+      zone: staging
+      timeout_s: 600
+      max_retries: 3
+    review:
+      zone: safe
+      timeout_s: 300
+      max_retries: 1
+    deploy:
+      zone: production
+      timeout_s: 1800
+      max_retries: 2
+
+  # Phase-specific overrides for critical paths
+  overrides:
+    quick_task:
+      execute:
+        zone: test
+        timeout_s: 60
+
+# ---------------------------------------------------------------------------
+# Sub-config paths — the swarm runtime loads these at startup
+# ---------------------------------------------------------------------------
+config_paths:
+  scaling: "configs/scaling_config.yaml"
+  yolo: "configs/yolo_config.yaml"
+  logging: "configs/logging_config.yaml"
+
+# ---------------------------------------------------------------------------
+# Runtime settings
+# ---------------------------------------------------------------------------
+runtime:
+  loop_interval_ms: 50               # Main event loop tick interval
+  worker_heartbeat_s: 15             # Seconds between worker heartbeats
+  task_reclaim_timeout_s: 14400      # 4 hours — reclaim stale tasks
+  max_workers_per_task: 1            # At-most-one execution guarantee
+  graceful_shutdown_s: 30            # Wait time for in-flight tasks on SIGTERM
+
+  # Startup behaviour
+  startup:
+    validate_configs: true            # Crash on invalid YAML before serving
+    warm_up_connection_pool: true
+    load_yolo_zones: true
+
+# ---------------------------------------------------------------------------
+# Observability
+# ---------------------------------------------------------------------------
+observability:
+  metrics_enabled: true
+  metrics_port: 9090                  # Prometheus scrape endpoint
+  tracing_enabled: false
+  tracing_endpoint: ""                # e.g. "http://jaeger:4318/v1/traces"

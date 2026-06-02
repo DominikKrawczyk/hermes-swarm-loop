@@ -1,0 +1,59 @@
+# Scaling configuration for the Hermes Swarm Loop framework
+# Controls rate limiting, batching, circuit breaking, connection pooling,
+# priority queuing, pressure management, and deployment tier sizing.
+
+token_bucket:
+  rate: 10
+  burst: 20
+  timeout: 30
+
+adaptive_batcher:
+  min_batch: 3
+  max_batch: 100
+  initial_batch: 10
+  adapt_threshold: 0.3
+
+circuit_breaker:
+  failure_threshold: 5
+  recovery_timeout: 30
+  half_open_max_requests: 3
+
+connection_pool:
+  max_connections: 10
+  max_keepalive: 10
+  timeout: 30.0
+
+priority_queue:
+  tiers:
+    critical: 100
+    high: 50
+    normal: 0
+    low: -10
+
+queue_pressure:
+  max_depth: 100
+  throttle_threshold: 0.8
+  check_interval: 5
+
+scaling_tiers:
+  small:
+    agents: 11
+    concurrency: 3
+    ram_mb: 500
+    max_runtime_min: 30
+  medium:
+    agents: 33
+    concurrency: 10
+    ram_mb: 500
+    max_runtime_min: 45
+  large:
+    agents: 66
+    concurrency: 20
+    ram_mb: 1024
+    max_runtime_min: 60
+  massive:
+    agents: 999
+    concurrency: 0
+    ram_mb: 2048
+    max_runtime_min: 120
+    event_driven: true

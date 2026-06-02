@@ -1,0 +1,25 @@
+# Hermes Swarm Loop — Engine Configuration
+# ==========================================
+# Controls phase/point lifecycle behaviour.
+
+engine:
+  db_path: ".swarm_state.db"
+  journal_mode: "WAL"
+
+phase_machine:
+  all_phases:
+    - prd_build
+    - development
+    - quality
+    - hunting
+    - simplicity
+
+  points:
+    prd_build: [research, build, synthesize]
+    development: [architecture, setup, code_generation]
+    quality: [audit, improve, review]
+    hunting: [bugs, arch_review, security]
+    simplicity: [dead_code, occam, prd_alignment]
+
+  max_retries: 3
+  cas_timeout_seconds: 5.0

@@ -1,0 +1,131 @@
+# =============================================================================
+# Hermes Swarm Loop — Logging Configuration
+# =============================================================================
+# Standard Python logging config dict consumed by logging.config.dictConfig().
+# Structured JSON output for log aggregators (Datadog, ELK, etc.) alongside
+# human-readable console output.
+
+version: 1
+disable_existing_loggers: false
+
+# ---------------------------------------------------------------------------
+# Formatters
+# ---------------------------------------------------------------------------
+formatters:
+
+  # Structured JSON format — machine-parseable for log shippers
+  structured:
+    format: '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "name": "%(name)s", "module": "%(module)s", "function": "%(funcName)s", "line": %(lineno)d, "message": "%(message)s", "pid": %(process)d, "thread": %(thread)d}'
+    datefmt: "%Y-%m-%dT%H:%M:%S%z"
+    validate: true
+
+  # Human-readable console format with colour-friendly layout
+  console:
+    format: "%(asctime)s  %(levelname)-8s  %(name)s.%(funcName)s:%(lineno)d  —  %(message)s"
+    datefmt: "%H:%M:%S"
+    validate: true
+
+  # Detailed format for file-based logging (includes all metadata)
+  detailed:
+    format: "%(asctime)s  |  %(levelname)-8s  |  %(name)s  |  %(module)s.%(funcName)s:%(lineno)d  |  pid=%(process)d  thread=%(thread)d  |  %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S%z"
+    validate: true
+
+# ---------------------------------------------------------------------------
+# Handlers
+# ---------------------------------------------------------------------------
+handlers:
+
+  # Console handler — everything goes to stderr
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: console
+    stream: ext://sys.stderr
+
+  # Rotating file handler — primary log file with rotation by size
+  rotating_file:
+    class: logging.handlers.RotatingFileHandler
+    level: DEBUG
+    formatter: detailed
+    filename: /var/log/hermes-swarm-loop/swarm.log
+    maxBytes: 10485760                # 10 MB per file
+    backupCount: 10                   # Keep 10 rotated files
+    encoding: utf-8
+    mode: a
+
+  # Structured JSON file handler — for log shippers / aggregators
+  structured_file:
+    class: logging.handlers.RotatingFileHandler
+    level: DEBUG
+    formatter: structured
+    filename: /var/log/hermes-swarm-loop/swarm.jsonl
+    maxBytes: 52428800                # 50 MB per file
+    backupCount: 5
+    encoding: utf-8
+    mode: a
+
+  # Error-specific handler — only WARNING and above
+  error_file:
+    class: logging.handlers.RotatingFileHandler
+    level: WARNING
+    formatter: detailed
+    filename: /var/log/hermes-swarm-loop/errors.log
+    maxBytes: 10485760
+    backupCount: 5
+    encoding: utf-8
+    mode: a
+
+# ---------------------------------------------------------------------------
+# Root logger
+# ---------------------------------------------------------------------------
+root:
+  level: DEBUG
+  handlers:
+    - console
+    - rotating_file
+    - structured_file
+    - error_file
+  propagate: false
+
+# ---------------------------------------------------------------------------
+# Named loggers — fine-grained level control per module
+# ---------------------------------------------------------------------------
+loggers:
+
+  # Framework core — keep at INFO in production, DEBUG during dev
+  hermes_swarm_loop:
+    level: DEBUG
+    handlers:
+      - console
+      - rotating_file
+      - structured_file
+    propagate: false
+
+  # Scaling modules — noisy at DEBUG; keep at INFO for normal ops
+  hermes_swarm_loop.scaling:
+    level: INFO
+    propagate: true
+
+  # YOLO zone router — log every zone transition
+  hermes_swarm_loop.yolo:
+    level: DEBUG
+    propagate: true
+
+  # Circuit breaker — log state transitions prominently
+  hermes_swarm_loop.circuit_breaker:
+    level: INFO
+    propagate: true
+
+  # Third-party noise suppression
+  asyncio:
+    level: WARNING
+    propagate: true
+
+  httpx:
+    level: WARNING
+    propagate: true
+
+  urllib3:
+    level: WARNING
+    propagate: true

@@ -1,0 +1,93 @@
+# Hermes Swarm Loop configuration.
+# Central configuration file for the 3x3x11 autonomous build framework.
+
+# ─── Project ───────────────────────────────────────────────────────────────
+project:
+  name: "Hermes Swarm Loop"
+  version: "6.4.0"
+  description: "3x3x11 autonomous build framework for Hermes Agent"
+
+# ─── Phase Configuration ───────────────────────────────────────────────────
+phases:
+  prd_build:
+    points: ["research", "build", "synthesize"]
+    agents_per_point: 33
+  development:
+    points: ["architecture", "setup", "code_generation"]
+    agents_per_point: 11
+  quality:
+    points: ["audit", "improve", "review"]
+    agents_per_point: 11
+  hunting:
+    points: ["bugs", "arch_review", "security"]
+    agents_per_point: 11
+  simplicity:
+    points: ["dead_code", "occam", "prd_alignment"]
+    agents_per_point: 11
+
+# ─── YOLO Zones ────────────────────────────────────────────────────────────
+yolo:
+  default_zone: "test"
+  zones:
+    safe:
+      max_parallel: 5
+      auto_approve: false
+    test:
+      max_parallel: 11
+      auto_approve: true
+    staging:
+      max_parallel: 33
+      auto_approve: true
+    production:
+      max_parallel: 999
+      auto_approve: true
+
+# ─── Mastery Gate ──────────────────────────────────────────────────────────
+mastery_gate:
+  weights:
+    correctness: 0.25
+    safety: 0.20
+    test_coverage: 0.15
+    consistency: 0.15
+    diversity: 0.10
+    efficiency: 0.10
+    clarity: 0.05
+  thresholds:
+    pass: 0.70
+    cross_check: 0.50
+    review: 0.30
+
+# ─── Database ──────────────────────────────────────────────────────────────
+database:
+  path: ".swarm_state.db"
+  journal_mode: "WAL"
+  pool_size: 5
+  timeout_seconds: 10
+
+# ─── Workspace ─────────────────────────────────────────────────────────────
+workspace:
+  default_kind: "scratch"
+  worktree_prefix: "wt/"
+
+# ─── Scaling ───────────────────────────────────────────────────────────────
+scaling:
+  token_bucket:
+    rate: 10.0
+    burst: 20
+  adaptive_batcher:
+    min_batch_size: 5
+    max_batch_size: 50
+    target_latency_ms: 1000
+  circuit_breaker:
+    failure_threshold: 5
+    recovery_timeout_seconds: 30
+    half_open_max_tries: 3
+  connection_pool:
+    min_size: 2
+    max_size: 10
+    idle_timeout_seconds: 60
+    max_lifetime_seconds: 300
+  queue_pressure:
+    high_threshold: 100
+    critical_threshold: 500
+    window_seconds: 30

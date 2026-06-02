@@ -1,0 +1,37 @@
+zones:
+  safe:
+    auto_approve: false
+    max_parallel: 5
+    safety_valve_enabled: true
+    requires_human: true
+  test:
+    auto_approve: true
+    max_parallel: 11
+    safety_valve_enabled: true
+    nested_check: true
+  staging:
+    auto_approve: true
+    max_parallel: 33
+    safety_valve_enabled: true
+  production:
+    auto_approve: true
+    max_parallel: 999
+    safety_valve_enabled: false
+
+safety_valve:
+  max_consecutive_approvals: 50
+  max_loc_changed: 1000
+  cooldown_seconds: 60
+
+escalation_chain:
+  - hardline_floor
+  - yolo
+  - manual
+
+subagent_inheritance:
+  chain:
+    - root
+    - phase
+    - point
+    - agent
+  default_zone: test

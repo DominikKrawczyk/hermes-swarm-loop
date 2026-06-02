@@ -1,4 +1,38 @@
+# Python
 *.pyc
 __pycache__/
-.archive/
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Environment
+.env
+.venv/
+venv/
+*.venv
+
+# Hermes Swarm Loop
+.swarm_state.db
+.hermes_swarm_launch.json
+worktrees/
 swarm_state.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Archive (keep, don't index)
+.archive/
+
+# Temp
+*.tmp
+/tmp/

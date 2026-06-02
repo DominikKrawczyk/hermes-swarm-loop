@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Lint with ruff
+      run: python -m ruff check engine/ scaling/ tests/ configs/ scripts/
+
+    - name: Type check with mypy
+      run: python -m mypy engine/ scaling/ --ignore-missing-imports || true
+
+    - name: Test with pytest
+      run: python -m pytest tests/ -v --tb=short --cov=engine --cov=scaling --cov=configs --cov-report=term-missing
+
+    - name: Check bootstrap imports
+      run: python -c "import sys; sys.path.insert(0, '.'); from scripts.bootstrap import parse_args; print('bootstrap imports OK')"
+
+    - name: Check engine imports
+      run: python -c "import sys; sys.path.insert(0, '.'); from engine import StateDB, MasteryGate, GateVerifier; print('engine imports OK')"
+
+  arch-docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Verify architecture docs exist
+      run: |
+        for f in arch/*.md; do
+          [ -f "$f" ] && echo "✓ $f ($(wc -l < "$f") lines)" || echo "✗ $f missing"
+        done
+
+  scaling-modules:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Verify scaling modules
+      run: python3 -c "
+import importlib.util
+modules = ['token_bucket','adaptive_batcher','cas_store','circuit_breaker','connection_pool','priority_queue','queue_pressure']
+for m in modules:
+    spec = importlib.util.find_spec('scaling.' + m)
+    print('  ' + ('OK' if spec else 'MISS') + ' scaling.' + m)
+    assert spec, m + ' not found'
+print('All 7 scaling modules present')
+"

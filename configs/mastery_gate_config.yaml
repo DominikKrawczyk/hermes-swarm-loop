@@ -1,0 +1,28 @@
+# Hermes Swarm Loop — Mastery Gate Configuration
+# ===============================================
+# Controls the 7-dimension quality gate scoring.
+
+mastery_gate:
+  dimensions:
+    correctness:    0.25   # Logical soundness
+    safety:         0.20   # Security/privacy/ethics
+    test_coverage:  0.15   # Adequate test coverage
+    consistency:    0.15   # Matches PRD, prior phases
+    diversity:      0.10   # Findings span multiple areas
+    efficiency:     0.10   # Performance, no unnecessary complexity
+    clarity:        0.05   # Documentation, readability
+
+  thresholds:
+    pass: 0.70
+    cross_check: 0.50
+    review: 0.30
+    # below 0.30 = BLOCK
+
+  prd_areas:
+    - architecture
+    - setup
+    - code
+    - testing
+    - security
+    - scaling
+    - ux
