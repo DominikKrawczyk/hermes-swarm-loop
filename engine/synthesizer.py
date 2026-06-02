@@ -1,16 +1,16 @@
 """Output synthesizer — merges parallel agent outputs into coherent artifacts."""
 from __future__ import annotations
+
 import json
-import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 def synthesize(
-    agent_outputs: List[Dict[str, Any]],
-    synthesis_plan: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    agent_outputs: list[dict[str, Any]],
+    synthesis_plan: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Merge parallel agent outputs into a single synthesized artifact.
 
     Args:
@@ -34,7 +34,7 @@ def synthesize(
         synthesis_plan = {"merge_strategy": "dedup_append", "output_format": "json"}
 
     # Merge all outputs
-    all_findings: List[Dict[str, Any]] = []
+    all_findings: list[dict[str, Any]] = []
     seen_keys: set = set()
 
     for agent_out in completed:
@@ -63,7 +63,7 @@ def synthesize(
     return merged
 
 
-def write_artifact(output: Dict[str, Any], path: str) -> str:
+def write_artifact(output: dict[str, Any], path: str) -> str:
     """Write synthesized output to a JSON artifact file.
 
     Args:

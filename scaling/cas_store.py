@@ -4,7 +4,8 @@ Thread-safe, dict-backed store supporting value-based CAS operations.
 """
 
 import threading
-from typing import Any, Hashable, Optional
+from collections.abc import Hashable
+from typing import Any
 
 
 class CASEntry:
@@ -51,7 +52,7 @@ class CASStore:
             else:
                 self._data[key] = {"value": value, "version": 1}
 
-    def get(self, key: Hashable) -> Optional[dict]:
+    def get(self, key: Hashable) -> dict | None:
         """Return dict with 'value' and 'version' keys, or None if missing."""
         with self._lock:
             entry = self._data.get(key)
@@ -68,7 +69,7 @@ class CASStore:
                 for k, v in self._data.items()
             }
 
-    def get_entry(self, key: Hashable) -> Optional[CASEntry]:
+    def get_entry(self, key: Hashable) -> CASEntry | None:
         """Return a CASEntry for *key*, or None if missing."""
         with self._lock:
             entry = self._data.get(key)

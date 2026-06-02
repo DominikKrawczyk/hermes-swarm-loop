@@ -10,7 +10,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from engine.mastery_gate import MasteryGate, ScoreCard, score_from_dict, DIMENSIONS
+from engine.mastery_gate import DIMENSIONS, MasteryGate, ScoreCard, score_from_dict
 
 
 class TestScoreCard:

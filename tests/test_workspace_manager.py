@@ -8,14 +8,15 @@ Worktree tests verify git integration (when a repo is available).
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
-from engine.workspace_manager import (
-    WorkspaceManager, Workspace, WorkspaceKind, WorkspaceError,
-)
 from engine.gate_11 import Gate11Verifier
-
+from engine.workspace_manager import (
+    Workspace,
+    WorkspaceError,
+    WorkspaceKind,
+    WorkspaceManager,
+)
 
 # ═══════════════════════════════════════════════════════════════════
 # WorkspaceManager — Validation / Parsing

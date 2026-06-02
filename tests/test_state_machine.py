@@ -9,8 +9,10 @@ import tempfile
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from engine.state_machine import (
-    StateDB, PhaseMachine, PointMachine, YOLOMachine,
-    PhaseEntry, PointEntry, YOLOState, ConflictError,
+    PhaseMachine,
+    PointMachine,
+    StateDB,
+    YOLOMachine,
 )
 
 

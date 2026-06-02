@@ -12,15 +12,12 @@ All transitions are idempotent and emit audit events.
 """
 
 import json
-import os
 import sqlite3
 import threading
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Optional
-
 
 # ─── Dataclasses ─────────────────────────────────────────────────
 
@@ -29,8 +26,8 @@ class PhaseEntry:
     id: int = 0
     phase: str = ""
     status: str = "todo"
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
+    started_at: str | None = None
+    completed_at: str | None = None
     total_points: int = 0
     completed_points: int = 0
     version: int = 1
@@ -42,8 +39,8 @@ class PointEntry:
     point: str = ""
     status: str = "todo"
     agent_count: int = 0
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
+    started_at: str | None = None
+    completed_at: str | None = None
     version: int = 1
 
 @dataclass
@@ -221,7 +218,7 @@ class PhaseMachine:
         self._db.log_event("phase_completed", {"phase": phase})
         return PhaseEntry(**dict(row))
 
-    def get_phase(self, phase: str) -> Optional[PhaseEntry]:
+    def get_phase(self, phase: str) -> PhaseEntry | None:
         with self._db.cursor() as c:
             c.execute("SELECT * FROM phase_state WHERE phase=?", (phase,))
             row = c.fetchone()
@@ -272,7 +269,7 @@ class PointMachine:
         self._db.log_event("point_completed", {"phase": phase, "point": point})
         return PointEntry(**dict(row))
 
-    def get_point(self, phase: str, point: str) -> Optional[PointEntry]:
+    def get_point(self, phase: str, point: str) -> PointEntry | None:
         with self._db.cursor() as c:
             c.execute("SELECT * FROM point_state WHERE phase=? AND point=?", (phase, point))
             row = c.fetchone()

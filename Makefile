@@ -33,14 +33,15 @@ clean:  # Remove cache and temp files
 	rm -rf .coverage htmlcov/
 
 push:  # Push to GitHub (uses gh api blob→tree→commit→ref pipeline)
-	python3 scripts/github_push.py
+	@echo "Use: gh api ... blob→tree→commit→ref (see references/github-push-pipeline.md)"
+	@echo "Or: git push origin main"
 
 run-ci:  # Full CI pipeline
 	python3 -m pytest tests/ -v --tb=short --cov=engine --cov=scaling --cov=configs
-	python3 -m ruff check engine/ scaling/
+	python3 -m ruff check engine/ scaling/ tests/
 
-bootstrap:  # Run bootstrap launcher
-	python3 scripts/bootstrap.py --project-name "MyProject" --project-desc "Build something great"
+bootstrap:  # Run bootstrap launcher from project root
+	python3 bootstrap.py --project-name "MyProject" --project-desc "Build something great"
 
 bootstrap-init:  # Run bootstrap with init-only (setup DB + phase config, skip launch)
-	python3 scripts/bootstrap.py --project-name "MyProject" --project-desc "Build something great" --init-only
+	python3 bootstrap.py --project-name "MyProject" --project-desc "Build something great" --init-only

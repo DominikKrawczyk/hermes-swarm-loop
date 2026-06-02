@@ -5,7 +5,12 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from engine.gate_verifier import GateVerifier, HandoffSchema, HandoffValidationResult, AgentCompletionStatus
+from engine.gate_verifier import (
+    AgentCompletionStatus,
+    GateVerifier,
+    HandoffSchema,
+    HandoffValidationResult,
+)
 
 
 class TestGateVerifier:

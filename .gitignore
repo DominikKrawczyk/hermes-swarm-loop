@@ -6,6 +6,9 @@ __pycache__/
 dist/
 build/
 *.egg
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
 
 # Environment
 .env
@@ -19,6 +22,10 @@ venv/
 worktrees/
 swarm_state.json
 
+# Legacy archive content (retained for history)
+archive/
+deep-archive/
+
 # IDE
 .vscode/
 .idea/
@@ -29,10 +36,3 @@ swarm_state.json
 # OS
 .DS_Store
 Thumbs.db
-
-# Archive (keep, don't index)
-.archive/
-
-# Temp
-*.tmp
-/tmp/

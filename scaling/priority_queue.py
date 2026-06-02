@@ -1,7 +1,10 @@
 
-import heapq, threading, time
+import heapq
+import threading
+import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Dict, Generic, Iterator, List, Optional, Sequence, TypeVar
+from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -11,13 +14,13 @@ class PriorityItem(Generic[T]):
     sequence: int = field(compare=True)
     item: Any = field(compare=False, repr=True)
     timestamp: float = field(default_factory=time.monotonic, compare=True)
-    metadata: Dict[str, Any] = field(default_factory=dict, compare=False, repr=False)
+    metadata: dict[str, Any] = field(default_factory=dict, compare=False, repr=False)
     def __repr__(self): return f"PriorityItem(priority={self.priority}, item={self.item})"
 
 @dataclass
 class PriorityQueueStats:
-    size: int = 0; priority_count: int = 0; min_priority: Optional[float] = None
-    max_priority: Optional[float] = None; total_put: int = 0; total_get: int = 0
+    size: int = 0; priority_count: int = 0; min_priority: float | None = None
+    max_priority: float | None = None; total_put: int = 0; total_get: int = 0
 
 @dataclass
 class PriorityQueue(Generic[T]):
@@ -81,6 +84,25 @@ class PriorityQueue(Generic[T]):
                     if remaining is not None and remaining <= 0: raise ValueError(f"Timeout {timeout}s")
                     self._not_empty.wait(timeout=remaining)
             pitem = heapq.heappop(self._heap); self._total_get += 1; self._not_full.notify(); return pitem
+
+    # -- Test-compatibility aliases --------------------------------------------
+
+    def push(self, item, priority=None):
+        """Test-compatible alias for put()."""
+        return self.put(item, priority=priority)
+
+    def pop(self):
+        """Test-compatible alias for non-blocking get() that returns None on empty."""
+        with self._not_empty:
+            if not self._heap:
+                return None
+            pitem = heapq.heappop(self._heap); self._total_get += 1; self._not_full.notify()
+            return pitem.item
+
+    @property
+    def is_empty(self) -> bool:
+        """Test-compatible property for empty check."""
+        return not self._heap
 
     def peek(self):
         with self._lock: return self._heap[0].item if self._heap else None

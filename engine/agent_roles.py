@@ -1,8 +1,24 @@
 """Agent role definitions for Hermes Swarm Loop — 198 roles across all phases."""
 from __future__ import annotations
-from typing import Dict, Any, List
 
-AGENT_ROLES: Dict[str, List[Dict[str, Any]]] = {
+from typing import Any
+
+DOMAINS = [
+    "state_machine", "mastery_gate", "scaling", "workspace_management",
+    "yolo_zones", "agent_roles", "bootstrap", "testing", "ci_cd",
+    "logging", "config_management", "error_handling", "concurrency",
+    "data_model", "api_design", "cli", "documentation", "security",
+    "performance", "observability", "recovery", "orchestration",
+    "communication", "storage", "network", "deployment", "monitoring",
+    "quality_gates", "feedback_loops", "self_reflection", "versioning",
+    "migration", "compatibility",
+]
+
+
+def _domain_for(index: int) -> str:
+    return DOMAINS[(index - 1) % len(DOMAINS)]
+
+AGENT_ROLES: dict[str, list[dict[str, Any]]] = {
     "prd_build": [
         {"name": f"prd_researcher_{i:02d}", "kind": "research",
          "domain": _domain_for(i), "description": f"Research agent {i} — {_domain_for(i)}"}
@@ -66,20 +82,9 @@ AGENT_ROLES: Dict[str, List[Dict[str, Any]]] = {
     ],
 }
 
-DOMAINS = [
-    "state_machine", "mastery_gate", "scaling", "workspace_management",
-    "yolo_zones", "agent_roles", "bootstrap", "testing", "ci_cd",
-    "logging", "config_management", "error_handling", "concurrency",
-    "data_model", "api_design", "cli", "documentation", "security",
-    "performance", "observability", "recovery", "orchestration",
-    "communication", "storage", "network", "deployment", "monitoring",
-    "quality_gates", "feedback_loops", "self_reflection", "versioning",
-    "migration", "compatibility",
-]
-
-
-def _domain_for(index: int) -> str:
-    return DOMAINS[(index - 1) % len(DOMAINS)]
+def total_roles() -> int:
+    """Return total number of defined agent roles."""
+    return sum(len(roles) for roles in AGENT_ROLES.values())
 
 
 def get_roles_for_phase(phase: str) -> list:
@@ -94,8 +99,3 @@ def get_role(name: str) -> dict | None:
             if role["name"] == name:
                 return role
     return None
-
-
-def total_roles() -> int:
-    """Return total number of defined agent roles."""
-    return sum(len(roles) for roles in AGENT_ROLES.values())

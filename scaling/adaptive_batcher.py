@@ -1,8 +1,10 @@
 
-import threading, time
+import threading
+import time
 from collections import deque
+from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, field
-from typing import Generic, Iterator, Optional, Sequence, TypeVar, Callable
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -29,7 +31,7 @@ class AdaptiveBatcher(Generic[T]):
     _lock: threading.Lock = field(default_factory=threading.Lock, init=False)
     _new_item_event: threading.Event = field(default_factory=threading.Event, init=False)
     _closed: bool = field(default=False, init=False)
-    _flush_hook: Optional[Callable[[Batch[T]], None]] = field(default=None, init=False)
+    _flush_hook: Callable[[Batch[T]], None] | None = field(default=None, init=False)
 
     def __post_init__(self):
         if self.batch_size <= 0:
@@ -115,7 +117,7 @@ class AdaptiveBatcher(Generic[T]):
             if len(self._buffer) >= self.batch_size:
                 self._new_item_event.set()
 
-    def flush(self) -> Optional[Batch[T]]:
+    def flush(self) -> Batch[T] | None:
         with self._lock:
             if not self._buffer:
                 return None
@@ -127,7 +129,7 @@ class AdaptiveBatcher(Generic[T]):
             self._flush_hook(b)
         return b
 
-    def close(self) -> Optional[Batch[T]]:
+    def close(self) -> Batch[T] | None:
         with self._lock:
             self._closed = True
             self._new_item_event.set()

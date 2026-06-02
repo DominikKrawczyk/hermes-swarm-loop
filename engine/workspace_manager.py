@@ -21,14 +21,12 @@ Typical usage::
 
 from __future__ import annotations
 
-import os
 import shutil
 import subprocess
 import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
 
 
 class WorkspaceKind(str, Enum):
@@ -54,8 +52,8 @@ class Workspace:
     kind: WorkspaceKind
     path: Path
     label: str = ""
-    branch: Optional[str] = None
-    metadata: Dict[str, object] = field(default_factory=dict)
+    branch: str | None = None
+    metadata: dict[str, object] = field(default_factory=dict)
 
     # ------------------------------------------------------------------
     # Convenience properties
@@ -94,7 +92,7 @@ class WorkspaceManager:
     ) -> None:
         self._root = Path(workspace_root)
         self._main_repo = Path(main_repo) if main_repo else None
-        self._active: Dict[str, Workspace] = {}
+        self._active: dict[str, Workspace] = {}
 
     # ------------------------------------------------------------------
     # Public API
@@ -154,14 +152,14 @@ class WorkspaceManager:
         # DIR workspaces are never cleaned up by us.
         self._active.pop(str(workspace.path), None)
 
-    def current_task_workspace(self, task_id: str) -> Optional[Workspace]:
+    def current_task_workspace(self, task_id: str) -> Workspace | None:
         """Return the active workspace for *task_id*, if any."""
         for ws in self._active.values():
             if ws.label == task_id:
                 return ws
         return None
 
-    def list_active(self) -> List[Workspace]:
+    def list_active(self) -> list[Workspace]:
         """Return a snapshot of all currently-active workspaces."""
         return list(self._active.values())
 
@@ -318,7 +316,7 @@ class WorkspaceManager:
                 f"Expected 'scratch', 'dir:<path>', or 'worktree'."
             ) from None
 
-    def resolve_path_from_token(self, token: str) -> Optional[Path]:
+    def resolve_path_from_token(self, token: str) -> Path | None:
         """Extract an explicit path from a kind token, if present.
 
         ``"scratch"`` and ``"worktree"`` return ``None``.

@@ -91,3 +91,24 @@ scaling:
     high_threshold: 100
     critical_threshold: 500
     window_seconds: 30
+
+# ─── Runtime ────────────────────────────────────────────────────────────────
+# Orchestration runtime settings — loop intervals, timeouts, startup behavior.
+runtime:
+  loop_interval_ms: 50               # Main event loop tick interval
+  worker_heartbeat_s: 15             # Seconds between worker heartbeats
+  task_reclaim_timeout_s: 14400      # 4 hours — reclaim stale tasks
+  max_workers_per_task: 1            # At-most-one execution guarantee
+  graceful_shutdown_s: 30            # Wait time for in-flight tasks on SIGTERM
+
+  startup:
+    validate_configs: true            # Crash on invalid YAML before serving
+    warm_up_connection_pool: true
+    load_yolo_zones: true
+
+# ─── Observability ──────────────────────────────────────────────────────────
+observability:
+  metrics_enabled: true
+  metrics_port: 9090                  # Prometheus scrape endpoint
+  tracing_enabled: false
+  tracing_endpoint: ""                # e.g. "http://jaeger:4318/v1/traces"

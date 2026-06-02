@@ -4,9 +4,9 @@ Provides StateDB, PhaseMachine, PointMachine, YOLOMachine, MasteryGate
 fixtures backed by a tmp_path SQLite database, plus scaling module fixtures.
 """
 
-import pytest
 from pathlib import Path
 
+import pytest
 
 # ── Engine Fixtures ───────────────────────────────────────────────
 

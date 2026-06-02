@@ -1,9 +1,10 @@
 """Configuration loader — loads YAML configs from configs/ directory with fallback."""
 from __future__ import annotations
+
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Try to import PyYAML; fall back to JSON-only if not available
 try:
@@ -18,7 +19,7 @@ CONFIG_DIR = SWARM_DIR / "configs"
 
 # ─── Default configurations ───
 
-DEFAULT_SCALING_CONFIG: Dict[str, Any] = {
+DEFAULT_SCALING_CONFIG: dict[str, Any] = {
     "agent_scaling": {
         "default_count": 11,
         "yolo_safe": 5,
@@ -35,7 +36,7 @@ DEFAULT_SCALING_CONFIG: Dict[str, Any] = {
     "queue_pressure": {"high_watermark": 0.8, "low_watermark": 0.3},
 }
 
-DEFAULT_YOLO_CONFIG: Dict[str, Any] = {
+DEFAULT_YOLO_CONFIG: dict[str, Any] = {
     "zones": {
         "safe": {"auto_approve": False, "max_parallel": 5},
         "test": {"auto_approve": True, "max_parallel": 11},
@@ -46,7 +47,7 @@ DEFAULT_YOLO_CONFIG: Dict[str, Any] = {
 }
 
 
-def load_yaml(path: Path) -> Optional[Dict[str, Any]]:
+def load_yaml(path: Path) -> dict[str, Any] | None:
     """Load a YAML file. Returns None if YAML is not available."""
     if not path.exists():
         return None
@@ -56,7 +57,7 @@ def load_yaml(path: Path) -> Optional[Dict[str, Any]]:
         return _yaml.safe_load(f)  # type: ignore
 
 
-def load_json(path: Path) -> Optional[Dict[str, Any]]:
+def load_json(path: Path) -> dict[str, Any] | None:
     """Load a JSON file. Returns None on failure."""
     if not path.exists():
         return None
@@ -67,7 +68,7 @@ def load_json(path: Path) -> Optional[Dict[str, Any]]:
         return None
 
 
-def load_config(filename: str, defaults: Dict[str, Any]) -> Dict[str, Any]:
+def load_config(filename: str, defaults: dict[str, Any]) -> dict[str, Any]:
     """Load config from YAML or JSON, falling back to defaults.
 
     Tries: configs/<filename>.yaml → configs/<filename>.yml → configs/<filename>.json
@@ -81,7 +82,7 @@ def load_config(filename: str, defaults: Dict[str, Any]) -> Dict[str, Any]:
     return defaults
 
 
-def load_scaling_config(path: Optional[str] = None) -> Dict[str, Any]:
+def load_scaling_config(path: str | None = None) -> dict[str, Any]:
     """Load scaling config, merging file over defaults."""
     if path:
         p = Path(path)
@@ -91,7 +92,7 @@ def load_scaling_config(path: Optional[str] = None) -> Dict[str, Any]:
     return load_config("scaling_config", DEFAULT_SCALING_CONFIG)
 
 
-def load_yolo_config(path: Optional[str] = None) -> Dict[str, Any]:
+def load_yolo_config(path: str | None = None) -> dict[str, Any]:
     """Load YOLO config, merging file over defaults."""
     if path:
         p = Path(path)
@@ -101,12 +102,12 @@ def load_yolo_config(path: Optional[str] = None) -> Dict[str, Any]:
     return load_config("yolo_config", DEFAULT_YOLO_CONFIG)
 
 
-def merge_configs(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+def merge_configs(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """Deep merge two config dicts — override values win."""
     return _deep_merge(base, override)
 
 
-def _deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """Recursive dict merge."""
     result = base.copy()
     for key, value in override.items():

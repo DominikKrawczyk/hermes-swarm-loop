@@ -43,7 +43,7 @@ def check_env():
 
 def main():
     parser = argparse.ArgumentParser(description="Hermes Swarm Loop — Bootstrap Launcher")
-    parser.add_argument("--project-name", required=True)
+    parser.add_argument("--project-name", default="")
     parser.add_argument("--project-desc", default="")
     parser.add_argument("--phase", default="development", choices=PhaseMachine.ALL_PHASES)
     parser.add_argument("--yolo-zone", default="test", choices=list(YOLO_ZONES.keys()))
@@ -52,9 +52,12 @@ def main():
     parser.add_argument("--db-path", default=None)
     args = parser.parse_args()
 
+    if not args.init_only and not args.project_name:
+        parser.error("--project-name is required (use --init-only to skip)")
+
     swarm_dir = str(_HERE)
     print(f"Hermes Swarm Loop — Bootstrap")
-    print(f"  Project: {args.project_name}  Phase: {args.phase}")
+    print(f"  Project: {args.project_name or '(init-only)'}  Phase: {args.phase}")
     print(f"  YOLO: {args.yolo_zone}  Agents: {args.max_agents}")
 
     # Stage 1

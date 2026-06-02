@@ -4,8 +4,8 @@ Matches the actual APIs found on disk (Phase 1 code generation agents).
 """
 
 import time
-import pytest
 
+import pytest
 
 # =============================================================================
 # TokenBucket Tests
@@ -87,7 +87,6 @@ class TestCircuitBreaker:
 
     def test_open_rejects_requests(self, circuit_breaker):
         """OPEN state rejects requests."""
-        from scaling.circuit_breaker import CircuitBreakerOpenError
         for _ in range(circuit_breaker.failure_threshold):
             circuit_breaker.record_failure()
         assert circuit_breaker.allows_request() is False
@@ -171,7 +170,7 @@ class TestConnectionPool:
         c1 = pool.acquire()
         # acquire returns PooledConnection, it's in_use
         assert pool.in_use == 1
-        c2 = pool.acquire()
+        c2 = pool.acquire()  # noqa: F841
         assert pool.in_use == 2
         c1.close()
         assert pool.in_use == 1
@@ -269,14 +268,14 @@ class TestQueuePressure:
 
     def test_pressure_level_low(self):
         """Low queue depth -> LOW pressure level."""
-        from scaling.queue_pressure import QueuePressure, PressureLevel
+        from scaling.queue_pressure import PressureLevel, QueuePressure
         qp = QueuePressure(max_depth=100)
         qp.record(10)
         assert qp.pressure_level == PressureLevel.LOW
 
     def test_pressure_level_high(self):
         """Queue at 70% -> HIGH pressure level."""
-        from scaling.queue_pressure import QueuePressure, PressureLevel
+        from scaling.queue_pressure import PressureLevel, QueuePressure
         qp = QueuePressure(max_depth=100)
         qp.record(depth=70)
         assert qp.pressure_level == PressureLevel.HIGH

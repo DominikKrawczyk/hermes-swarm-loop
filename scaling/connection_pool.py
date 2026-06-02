@@ -6,9 +6,10 @@ underlying resource to the idle pool.
 
 import threading
 import time
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Callable, Generic, List, Optional, Set, TypeVar, Generator
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -91,8 +92,8 @@ class ConnectionPool(Generic[T]):
     factory: Callable[[], T]
     max_size: int
     acquire_timeout: float = 10.0
-    validate: Optional[Callable[[T], bool]] = None
-    close_fn: Optional[Callable[[T], None]] = None
+    validate: Callable[[T], bool] | None = None
+    close_fn: Callable[[T], None] | None = None
 
     # Internal state — _in_use holds strong refs to prevent GC from
     # freeing tracked PooledConnections whose id() would then be reused.
@@ -163,7 +164,7 @@ class ConnectionPool(Generic[T]):
 
     # ── acquire / release ─────────────────────────────────────────────
 
-    def acquire(self, timeout: Optional[float] = None) -> PooledConnection[T]:
+    def acquire(self, timeout: float | None = None) -> PooledConnection[T]:
         """Acquire a pooled connection, creating one if necessary.
 
         Returns a ``PooledConnection`` wrapping the raw resource.
@@ -217,7 +218,7 @@ class ConnectionPool(Generic[T]):
 
     @contextmanager
     def acquire_context(
-        self, timeout: Optional[float] = None
+        self, timeout: float | None = None
     ) -> Generator[T, None, None]:
         """Context manager that yields the raw resource and auto-closes."""
         pooled = self.acquire(timeout)

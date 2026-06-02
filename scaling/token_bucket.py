@@ -1,7 +1,7 @@
 import threading
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator, Optional
 
 
 class TokenBucket:
@@ -28,9 +28,9 @@ class TokenBucket:
     def __init__(
         self,
         rate: float,
-        capacity: Optional[float] = None,
+        capacity: float | None = None,
         *,
-        burst: Optional[float] = None,
+        burst: float | None = None,
         refill_interval_ms: float = 0,
     ):
         if rate <= 0:
@@ -77,7 +77,7 @@ class TokenBucket:
         self,
         tokens: float = 1.0,
         block: bool = True,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
     ) -> bool:
         """Consume *tokens* from the bucket.
 
@@ -116,7 +116,7 @@ class TokenBucket:
             time.sleep(min(0.001, 1.0 / self.rate if self.rate > 0 else 0.001))
 
     def consume_or_wait(
-        self, tokens: float = 1.0, timeout: Optional[float] = None
+        self, tokens: float = 1.0, timeout: float | None = None
     ) -> bool:
         """Consume *tokens*, blocking if necessary.
 
@@ -130,14 +130,14 @@ class TokenBucket:
         return self.consume(tokens, block=True, timeout=timeout)
 
     def acquire(
-        self, tokens: float = 1.0, timeout: Optional[float] = None
+        self, tokens: float = 1.0, timeout: float | None = None
     ) -> bool:
         """Alias for ``consume(tokens, block=True, timeout=timeout)``."""
         return self.consume(tokens, True, timeout)
 
     @contextmanager
     def acquire_context(
-        self, tokens: float = 1.0, timeout: Optional[float] = None
+        self, tokens: float = 1.0, timeout: float | None = None
     ) -> Generator[bool, None, None]:
         """Context manager that acquires *tokens* on entry."""
         ok = self.consume(tokens, True, timeout)

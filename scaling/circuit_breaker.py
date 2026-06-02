@@ -8,8 +8,9 @@ consecutive-success-based recovery.
 
 import threading
 import time
+from collections.abc import Callable
 from enum import Enum, auto
-from typing import Callable, Optional, TypeVar
+from typing import TypeVar
 
 T = TypeVar("T")
 
@@ -67,9 +68,7 @@ class CircuitBreaker:
         self._consecutive_successes: int = 0
         self._last_failure_time: float = 0.0
         self._lock = threading.RLock()
-        self._on_state_change: Optional[
-            Callable[[CircuitState, CircuitState], None]
-        ] = None
+        self._on_state_change: Callable[[CircuitState, CircuitState], None] | None = None
 
     # -- State property ---------------------------------------------------------
 
