@@ -14,9 +14,9 @@ from .connection_pool import (
     PooledConnection,
     PoolStats,
 )
-from .priority_queue import PriorityItem, PriorityQueue, PriorityQueueStats
+from .priority_queue import PriorityItem, PriorityQueue, PriorityQueueStats, QueueEmpty, QueueFull
 from .queue_pressure import PressureLevel, PressureMetrics, QueuePressure, Sample
 from .token_bucket import TokenBucket
 
-__all__ = ["TokenBucket","AdaptiveBatcher","Batch","CASStore","CircuitBreaker","CircuitBreakerOpenError","CircuitState","ConnectionPool","ConnectionClosedError","ConnectionTimeoutError","PoolStats","PooledConnection","PriorityQueue","PriorityItem","PriorityQueueStats","QueuePressure","PressureLevel","PressureMetrics","Sample"]
+__all__ = ["TokenBucket","AdaptiveBatcher","Batch","CASStore","CircuitBreaker","CircuitBreakerOpenError","CircuitState","ConnectionPool","ConnectionClosedError","ConnectionTimeoutError","PoolStats","PooledConnection","PriorityQueue","PriorityItem","PriorityQueueStats","QueueEmpty","QueueFull","QueuePressure","PressureLevel","PressureMetrics","Sample"]
 __version__ = "0.1.0"

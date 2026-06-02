@@ -170,3 +170,36 @@ The argparse definition uses `PhaseMachine.ALL_PHASES` and `list(YOLO_ZONES.keys
 Phase 2 Point 1 code audit is complete. 11 agents audited all 34 source files in `engine/`, `scaling/`, `configs/`, and `tests/`. The CAS bug was the most critical finding — all 12 state machine mutation methods now use proper `WHERE version=?` guarding. Additional fixes included thread safety in scaling modules, config restoration in safety valve reset, and correction of latent logic bugs in mastery gate initialization.
 
 **Final test suite:** 390/390 passed. Zero regressions from all 11 agents' fixes. The codebase is instrumented against concurrent modification and thread-safety issues across both state machine and scaling infrastructure.
+
+---
+
+## Agent 09 — Supplementary Findings
+
+**Auditor:** Code Audit Agent 09 (`t_b861999e`)
+
+### Finding 6: Dead/unreferenced config files in `configs/`
+
+| File | Status |
+|------|--------|
+| `engine_config.yaml` | NOT referenced by any code |
+| `logging_config.yaml` | NOT referenced by any code |
+| `mastery_gate_config.yaml` | NOT referenced by any code |
+| `swarm_config.yaml` | NOT referenced by any code |
+| `workspace_config.yaml` | NOT referenced by any code |
+| `agent_roles.yaml` | NOT referenced (roles defined in `engine/agent_roles.py`) |
+| `scaling.yaml` | Redundant — different schema from `scaling_config.yaml` |
+| `yolo.yaml` | Redundant — different schema from `yolo_config.yaml` |
+| `workspace.yaml` | Redundant — different schema from `workspace_config.yaml` |
+| `sample_config.yaml` | Intentionally a sample (excluded) |
+
+These 9 files clutter the configs directory and could confuse users about which config files are actually in use. Particularly dangerous: `scaling.yaml` and `yolo.yaml` have completely different schema from their `*_config.yaml` counterparts but similar names.
+
+### Finding 7: `datetime.utcnow()` deprecated in Python 3.12+
+
+**File:** `engine/state_machine.py` (lines 236, 275, 296, 368, 393, 418)
+
+Six calls to `datetime.utcnow().isoformat()` use the deprecated `utcnow()` method which will raise `DeprecationWarning` under Python 3.12+. Should be replaced with `datetime.now(timezone.utc).isoformat()`. Not a functional bug on current Python 3.11, but a maintenance flag.
+
+### Finding 8: Missing `asyncio_default_fixture_loop_scope` in pytest config
+
+Running `python3 -W error -m pytest` triggers a `PytestDeprecationWarning` because `asyncio_default_fixture_loop_scope` is unset in `pyproject.toml`. This will become an error in future pytest-asyncio versions. Add `asyncio_default_fixture_loop_scope = "function"` to `[tool.pytest.ini_options]` in `pyproject.toml`.

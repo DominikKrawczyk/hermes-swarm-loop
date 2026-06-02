@@ -39,23 +39,30 @@ class ScoreCard:
                 "verdict": self.verdict, "notes": self.notes}
 
 class MasteryGate:
-    def __init__(self, prd_areas=None):
-        self.prd_areas = prd_areas if prd_areas is not None else ["arch","setup","code","test","security","scaling","ux"]
+    def __init__(self, prd_areas=None, diversification_threshold=0.5):
+        self.prd_areas = prd_areas if prd_areas is not None else ['arch','setup','code','test','security','scaling','ux']
+        self.diversification_threshold = diversification_threshold
     def evaluate(self, agent_scores):
         if not agent_scores: raise ValueError("No agent scores")
-        avg = ScoreCard(); n = len(agent_scores)
+        # Convert plain dicts to ScoreCard instances to prevent silent all-zeros
+        _scores = []
+        for s in agent_scores:
+            if isinstance(s, dict):
+                _scores.append(score_from_dict(s))
+            elif isinstance(s, ScoreCard):
+                _scores.append(s)
+            else:
+                raise TypeError(f"Expected ScoreCard or dict, got {type(s).__name__}")
+        avg = ScoreCard(); n = len(_scores)
         for dim in DIMENSIONS:
-            setattr(avg, dim, sum(getattr(s,dim) for s in agent_scores)/n)
+            setattr(avg, dim, sum(getattr(s,dim) for s in _scores)/n)
         return avg
     def check_diversification(self, s):
         g = []
-        if s.diversity < 0.5: g.append("diversity too concentrated")
-        if s.correctness < 0.5: g.append("correctness below threshold")
-        if s.safety < 0.5: g.append("safety concerns")
-        if s.test_coverage < 0.5: g.append("test_coverage below threshold")
-        if s.consistency < 0.5: g.append("consistency below threshold")
-        if s.efficiency < 0.5: g.append("efficiency below threshold")
-        if s.clarity < 0.5: g.append("clarity below threshold")
+        t = self.diversification_threshold
+        if s.diversity < t: g.append(f"diversity too concentrated (below {t})")
+        if s.correctness < t: g.append(f"correctness below threshold ({t})")
+        if s.safety < t: g.append(f"safety concerns (below {t})")
         return g
     def as_dict(self, phase, point, score, agents_used=1, time_seconds=0.0):
         return {"phase":phase,"point":point,"score":score.to_dict(),

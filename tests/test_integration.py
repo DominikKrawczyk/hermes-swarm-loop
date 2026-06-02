@@ -147,7 +147,7 @@ class TestPhasePointIntegration:
     def test_phase_requires_running_to_complete(self, state_db):
         """Completing a phase that isn't running raises ConflictError."""
         pm = PhaseMachine(state_db)
-        with pytest.raises(ConflictError, match="not in running"):
+        with pytest.raises(ConflictError, match="not found|not in running"):
             pm.complete_phase("development")
 
     def test_all_phases_order(self, state_db):

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+from dataclasses import dataclass, field
 from enum import Enum, auto
 
 
@@ -14,41 +15,25 @@ class PressureLevel(Enum):
     CRITICAL = auto()
 
 
+@dataclass
 class PressureMetrics:
-    """Simple metrics dataclass for backward compatibility."""
-
-    def __init__(
-        self,
-        current_depth: int = 0,
-        avg_depth: float = 0.0,
-        max_depth: int = 0,
-        utilisation: float = 0.0,
-        growth_rate: float = 0.0,
-        pressure_ratio: float = 0.0,
-        pressure_level: PressureLevel = PressureLevel.LOW,
-        sample_count: int = 0,
-        window_duration: float = 0.0,
-    ):
-        self.current_depth = current_depth
-        self.avg_depth = avg_depth
-        self.max_depth = max_depth
-        self.utilisation = utilisation
-        self.growth_rate = growth_rate
-        self.pressure_ratio = pressure_ratio
-        self.pressure_level = pressure_level
-        self.sample_count = sample_count
-        self.window_duration = window_duration
+    """Simple metrics dataclass."""
+    current_depth: int = 0
+    avg_depth: float = 0.0
+    max_depth: int = 0
+    utilisation: float = 0.0
+    growth_rate: float = 0.0
+    pressure_ratio: float = 0.0
+    pressure_level: PressureLevel = PressureLevel.LOW
+    sample_count: int = 0
+    window_duration: float = 0.0
 
 
+@dataclass
 class Sample:
-    """Simple sample dataclass for backward compatibility."""
-
-    def __init__(self, depth: int, timestamp: float = 0.0):
-        self.depth = depth
-        self.timestamp = timestamp
-
-    def __repr__(self):
-        return f"Sample(depth={self.depth}, ts={self.timestamp:.3f})"
+    """Simple sample dataclass."""
+    depth: int = 0
+    timestamp: float = 0.0
 
 
 class QueuePressure:

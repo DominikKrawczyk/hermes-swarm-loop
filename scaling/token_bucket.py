@@ -51,7 +51,7 @@ class TokenBucket:
         self.refill_interval_ms = float(refill_interval_ms)
         self._tokens = self.capacity
         self._last_refill = time.monotonic()
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
 
     # ── Properties ──────────────────────────────────────────────────────
 

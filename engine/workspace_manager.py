@@ -238,6 +238,10 @@ class WorkspaceManager:
                     "Remove it manually and retry."
                 )
         else:
+            # Ensure the branch exists before git worktree add
+            existing = self._run_git(repo, "branch", "--list", branch).strip()
+            if not existing:
+                self._run_git(repo, "branch", branch)
             self._run_git(repo, "worktree", "add", str(worktree_dir), branch)
 
         ws = Workspace(

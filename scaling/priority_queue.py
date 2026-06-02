@@ -8,6 +8,15 @@ from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")
 
+class QueueEmpty(ValueError):
+    """Raised when a get() is attempted on an empty queue."""
+    pass
+
+class QueueFull(ValueError):
+    """Raised when a put() is attempted on a full queue."""
+    pass
+
+
 @dataclass(order=True)
 class PriorityItem(Generic[T]):
     priority: int | float = field(compare=True)
@@ -56,12 +65,12 @@ class PriorityQueue(Generic[T]):
         with self._not_full:
             if self.maxsize > 0:
                 if not block:
-                    if len(self._heap) >= self.maxsize: raise ValueError("Queue full")
+                    if len(self._heap) >= self.maxsize: raise QueueFull("Queue full")
                 else:
                     deadline = None if timeout is None else time.monotonic() + timeout
                     while len(self._heap) >= self.maxsize:
                         remaining = deadline - time.monotonic() if deadline else None
-                        if remaining is not None and remaining <= 0: raise ValueError(f"Timeout {timeout}s")
+                        if remaining is not None and remaining <= 0: raise QueueFull(f"Timeout {timeout}s")
                         self._not_full.wait(timeout=remaining)
             self._sequence += 1
             heapq.heappush(self._heap, pitem)
@@ -71,12 +80,12 @@ class PriorityQueue(Generic[T]):
     def get(self, block=True, timeout=None):
         with self._not_empty:
             if not block:
-                if not self._heap: raise ValueError("Queue empty")
+                if not self._heap: raise QueueEmpty("Queue empty")
             else:
                 deadline = None if timeout is None else time.monotonic() + timeout
                 while not self._heap:
                     remaining = deadline - time.monotonic() if deadline else None
-                    if remaining is not None and remaining <= 0: raise ValueError(f"Timeout {timeout}s")
+                    if remaining is not None and remaining <= 0: raise QueueEmpty(f"Timeout {timeout}s")
                     self._not_empty.wait(timeout=remaining)
             pitem = heapq.heappop(self._heap)
             self._total_get += 1
@@ -86,12 +95,12 @@ class PriorityQueue(Generic[T]):
     def get_with_priority(self, block=True, timeout=None):
         with self._not_empty:
             if not block:
-                if not self._heap: raise ValueError("Queue empty")
+                if not self._heap: raise QueueEmpty("Queue empty")
             else:
                 deadline = None if timeout is None else time.monotonic() + timeout
                 while not self._heap:
                     remaining = deadline - time.monotonic() if deadline else None
-                    if remaining is not None and remaining <= 0: raise ValueError(f"Timeout {timeout}s")
+                    if remaining is not None and remaining <= 0: raise QueueEmpty(f"Timeout {timeout}s")
                     self._not_empty.wait(timeout=remaining)
             pitem = heapq.heappop(self._heap)
             self._total_get += 1

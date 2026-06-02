@@ -193,9 +193,9 @@ class ConnectionPool(Generic[T]):
                     self._in_use.add(c)
                     return c
 
-                self._waits += 1
-
             # At capacity — wait for a release
+            with self._lock:
+                self._waits += 1
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 with self._lock:
@@ -213,8 +213,21 @@ class ConnectionPool(Generic[T]):
         this is equivalent to calling ``.close()`` on the
         ``PooledConnection``.  The raw resource is wrapped in a fresh
         ``PooledConnection`` and made available for reuse.
+
+        Guards against duplicate releases: if a PooledConnection wrapping
+        the same resource is already in the idle pool, the duplicate is
+        silently skipped.
         """
         with self._lock:
+            # Check both pools to prevent duplicates
+            for pc in self._pool:
+                if pc.resource is conn:
+                    return
+            for pc in self._in_use:
+                if pc.resource is conn:
+                    # Connection was still tracked as in-use — discard from in_use
+                    self._in_use.discard(pc)
+                    break
             self._pool.append(PooledConnection(conn, self))
             self._available_event.set()
 

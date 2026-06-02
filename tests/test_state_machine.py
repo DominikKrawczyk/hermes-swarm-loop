@@ -617,7 +617,7 @@ class TestPhaseLifecycle:
             pm = PhaseMachine(db)
             pm.start_phase("development")
             import pytest
-            with pytest.raises(ConflictError, match="needs one of|not done or failed"):
+            with pytest.raises(ConflictError, match="not done/failed or version conflict"):
                 pm.archive_phase("development")  # still running
         finally:
             try: os.unlink(path)
