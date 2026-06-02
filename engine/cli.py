@@ -70,17 +70,25 @@ def _resolve_db(project_dir: str | None) -> StateDB:
 
 
 def _load_project_config(project_dir: str | None) -> dict[str, Any]:
-    """Load the merged project config from *project_dir* or CWD."""
+    """Load the merged project config from *project_dir* or CWD.
+
+    Tries: .yaml → .yml → .json
+    """
     base = Path(project_dir).resolve() if project_dir else Path.cwd().resolve()
-    config_paths = [
-        base / "configs" / "config.yaml",
-        base / "config.yaml",
-        base / "config" / "config.yaml",
-    ]
-    for p in config_paths:
-        if p.is_file():
-            with open(p) as f:
-                return dict(yaml.safe_load(f) or {})
+    extensions = [".yaml", ".yml", ".json"]
+    for ext in extensions:
+        config_paths = [
+            base / "configs" / f"config{ext}",
+            base / f"config{ext}",
+            base / "config" / f"config{ext}",
+        ]
+        for p in config_paths:
+            if p.is_file():
+                with open(p) as f:
+                    if ext in (".yaml", ".yml"):
+                        return dict(yaml.safe_load(f) or {})
+                    else:
+                        return dict(json.load(f) or {})
     # Return empty dict — caller defaults apply
     return {}
 

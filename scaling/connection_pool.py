@@ -198,7 +198,8 @@ class ConnectionPool(Generic[T]):
             # At capacity — wait for a release
             remaining = deadline - time.monotonic()
             if remaining <= 0:
-                self._timeouts += 1
+                with self._lock:
+                    self._timeouts += 1
                 raise ConnectionTimeoutError(
                     f"Timeout after {timeout or self.acquire_timeout}s"
                 )

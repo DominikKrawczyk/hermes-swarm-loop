@@ -40,7 +40,7 @@ class ScoreCard:
 
 class MasteryGate:
     def __init__(self, prd_areas=None):
-        self.prd_areas = prd_areas or ["arch","setup","code","test","security","scaling","ux"]
+        self.prd_areas = prd_areas if prd_areas is not None else ["arch","setup","code","test","security","scaling","ux"]
     def evaluate(self, agent_scores):
         if not agent_scores: raise ValueError("No agent scores")
         avg = ScoreCard(); n = len(agent_scores)

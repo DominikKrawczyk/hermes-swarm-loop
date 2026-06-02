@@ -118,7 +118,7 @@ class QueuePressure:
 
     def __repr__(self) -> str:
         return (
-            f"QueuePressure(depth={self._depth}, "
+            f"QueuePressure(depth={self.current_depth}, "
             f"pressure={self.pressure_ratio:.2f}, "
             f"level={self.pressure_level.name})"
         )

@@ -336,17 +336,29 @@ class PointMachine:
 
     def create_point(self, phase: str, point: str, agent_count: int = 11) -> PointEntry:
         with self._db.cursor() as c:
-            c.execute(
-                "INSERT INTO point_state (phase, point, status, agent_count, started_at, version) "
-                "VALUES (?, ?, 'todo', ?, NULL, 1) "
-                "ON CONFLICT(phase, point) DO UPDATE SET "
-                "  status='todo', "
-                "  started_at=NULL, "
-                "  completed_at=NULL, "
-                "  agent_count=excluded.agent_count, "
-                "  version=version+1",
-                (phase, point, agent_count)
-            )
+            # CAS: SELECT version first to guard concurrent writes
+            c.execute("SELECT version FROM point_state WHERE phase=? AND point=?", (phase, point))
+            row = c.fetchone()
+            if row is None:
+                # Point doesn't exist — fresh INSERT
+                c.execute(
+                    "INSERT INTO point_state (phase, point, status, agent_count, started_at, version) "
+                    "VALUES (?, ?, 'todo', ?, NULL, 1)",
+                    (phase, point, agent_count)
+                )
+            else:
+                # Point exists — CAS-protected UPDATE
+                cur_version = row["version"]
+                c.execute(
+                    "UPDATE point_state SET status='todo', started_at=NULL, completed_at=NULL, "
+                    "agent_count=?, version=version+1 "
+                    "WHERE phase=? AND point=? AND version=?",
+                    (agent_count, phase, point, cur_version)
+                )
+                if c.rowcount == 0:
+                    raise ConflictError(
+                        f"CAS conflict creating point '{phase}/{point}': version changed"
+                    )
             c.execute("SELECT * FROM point_state WHERE phase=? AND point=?", (phase, point))
             row = c.fetchone()
         self._db.log_event("point_created", {"phase": phase, "point": point})
@@ -526,8 +538,12 @@ class YOLOMachine:
         return True
 
     def reset_safety_valve(self) -> YOLOState:
+        state = self.get_state()
+        zone_cfg = YOLO_ZONES.get(state.zone, YOLO_ZONES["safe"])
         entry = self._cas_update_yolo(
-            "safety_valve_active=0, consecutive_errors=0"
+            "safety_valve_active=0, consecutive_errors=0, "
+            "auto_approve=?, max_parallel=?",
+            [int(zone_cfg["auto_approve"]), zone_cfg["max_parallel"]]
         )
-        self._db.log_event("safety_valve_reset", {})
+        self._db.log_event("safety_valve_reset", {"zone": state.zone})
         return entry
