@@ -68,7 +68,9 @@ class AdaptiveBatcher(Generic[T]):
 
     @current_batch_size.setter
     def current_batch_size(self, value: int) -> None:
-        self.batch_size = max(self.min_batch, min(value, self.max_batch))
+        clamped = max(self.min_batch, min(value, self.max_batch))
+        with self._lock:
+            self.batch_size = clamped
 
     @property
     def buffer(self) -> Sequence[T]:
@@ -89,10 +91,11 @@ class AdaptiveBatcher(Generic[T]):
         ``min_batch``).  The *concurrency_ratio* parameter is accepted for future
         use but does not affect the current algorithm.
         """
-        if ms < self.target_latency_ms * self.scale_up_threshold:
-            self.batch_size = min(self.batch_size + 1, self.max_batch)
-        elif ms > self.target_latency_ms:
-            self.batch_size = max(self.batch_size - 1, self.min_batch)
+        with self._lock:
+            if ms < self.target_latency_ms * self.scale_up_threshold:
+                self.batch_size = min(self.batch_size + 1, self.max_batch)
+            elif ms > self.target_latency_ms:
+                self.batch_size = max(self.batch_size - 1, self.min_batch)
 
     def reset(self) -> None:
         """Reset batch size to ``min_batch`` and clear pending items."""

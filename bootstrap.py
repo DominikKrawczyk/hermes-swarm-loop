@@ -80,14 +80,14 @@ def main():
     pm.start_phase(args.phase)
     pt_m = PointMachine(db)
     points = PhaseMachine.POINTS.get(args.phase, [])
+    capped = min(args.max_agents, YOLO_ZONES[args.yolo_zone]["max_parallel"])
     for pt in points:
-        pt_m.create_point(args.phase, pt, args.max_agents)
-    print(f"  Phase '{args.phase}': {len(points)} points")
+        pt_m.create_point(args.phase, pt, capped)
+    print(f"  Phase '{args.phase}': {len(points)} points (agents capped at {capped})")
 
     # Stage 4
     print("\n--- Stage 4: YOLO Init ---")
     ym = YOLOMachine(db)
-    capped = min(args.max_agents, YOLO_ZONES[args.yolo_zone]["max_parallel"])
     ym.set_zone(args.yolo_zone)
     ym.reset_safety_valve()
     print(f"  Zone: {args.yolo_zone} (capped at {capped})")
