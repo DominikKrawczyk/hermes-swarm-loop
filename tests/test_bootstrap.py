@@ -352,7 +352,7 @@ class TestModuleIntegrity:
     def test_all_phases_defined(self):
         from engine.state_machine import PhaseMachine
 
-        expected = ["prd_build", "development", "quality", "hunting", "simplicity"]
+        expected = ["prd_build", "development", "hunting", "quality", "simplicity"]
         assert PhaseMachine.ALL_PHASES == expected
 
     def test_yolo_zones_have_correct_caps(self):

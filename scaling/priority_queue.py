@@ -50,7 +50,8 @@ class PriorityQueue(Generic[T]):
         self._not_full = threading.Condition(self._lock)
 
     @property
-    def size(self): return len(self._heap)
+    def size(self):
+        with self._lock: return len(self._heap)
     def __len__(self): return self.size
     def full(self):
         if self.maxsize <= 0: return False
@@ -61,8 +62,8 @@ class PriorityQueue(Generic[T]):
     def put(self, item, priority=None, metadata=None, block=True, timeout=None):
         if priority is None: priority = self.default_priority
         # Negate priority so higher user-priority = smaller heap-key = popped first
-        pitem = PriorityItem(priority=-priority, sequence=self._sequence, item=item, metadata=metadata or {})
         with self._not_full:
+            pitem = PriorityItem(priority=-priority, sequence=self._sequence, item=item, metadata=metadata or {})
             if self.maxsize > 0:
                 if not block:
                     if len(self._heap) >= self.maxsize: raise QueueFull("Queue full")
@@ -142,7 +143,6 @@ class PriorityQueue(Generic[T]):
                     if i < len(self._heap):
                         self._heap[i] = last
                         heapq.heapify(self._heap)
-                    self._total_get += 1
                     self._not_full.notify()
                     return True
             return False

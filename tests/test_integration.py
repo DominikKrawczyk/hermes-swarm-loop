@@ -158,7 +158,7 @@ class TestPhasePointIntegration:
         phases = pm.all_phases()
         assert len(phases) == 5
         order = [p.phase for p in phases]
-        assert order == ["prd_build", "development", "quality", "hunting", "simplicity"]
+        assert order == ["prd_build", "development", "hunting", "quality", "simplicity"]
 
     def test_invalid_phase_name(self, state_db):
         pm = PhaseMachine(state_db)

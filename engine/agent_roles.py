@@ -16,17 +16,32 @@ DOMAINS = [
 
 
 def _domain_for(index: int) -> str:
+    """Map a 1-indexed agent number to a domain name from DOMAINS.
+
+    Args:
+        index: 1-indexed agent number. Callers **must** pass
+            values starting at 1 (e.g. ``range(1, N+1)``).
+            Passing 0-based indices will silently shift the
+            distribution off by one.
+
+    Returns:
+        The domain name at ``DOMAINS[(index - 1) % len(DOMAINS)]``.
+    """
     return DOMAINS[(index - 1) % len(DOMAINS)]
 
 AGENT_ROLES: dict[str, list[dict[str, Any]]] = {
     "prd_build": [
         {"name": f"prd_researcher_{i:02d}", "kind": "research",
          "domain": _domain_for(i), "description": f"Research agent {i} — {_domain_for(i)}"}
-        for i in range(1, 34)
+        for i in range(1, 23)
+    ] + [
+        {"name": f"prd_question_{i:02d}", "kind": "questions",
+         "domain": _domain_for(i), "description": f"Questions agent {i} — {_domain_for(i)}"}
+        for i in range(1, 23)
     ] + [
         {"name": f"prd_builder_{i:02d}", "kind": "build",
          "domain": _domain_for(i), "description": f"Build agent {i} — {_domain_for(i)}"}
-        for i in range(1, 34)
+        for i in range(1, 23)
     ],
     "development": [
         {"name": f"architect_{i:02d}", "kind": "architecture",

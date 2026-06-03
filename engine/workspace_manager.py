@@ -296,6 +296,10 @@ class WorkspaceManager:
                 check=True,
             )
             return result.stdout.strip()
+        except subprocess.TimeoutExpired as exc:
+            raise WorkspaceError(
+                f"git {' '.join(args)!r} timed out after {exc.timeout}s"
+            ) from exc
         except subprocess.CalledProcessError as exc:
             stderr = exc.stderr.strip()
             raise WorkspaceError(

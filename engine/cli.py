@@ -12,9 +12,8 @@ from __future__ import annotations
 import json
 import os
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, TextIO
+from typing import Any
 
 import click
 import yaml
@@ -30,28 +29,29 @@ _HERE = Path(__file__).resolve().parent
 _PROJECT_ROOT = _HERE.parent
 
 try:
-    # When installed as a package, imports resolve normally
-    from engine import state_machine, mastery_gate, gate_11, workspace_manager, synthesizer, config as cfg_mod
+    from engine.state_machine import (
+        ConflictError,
+        PhaseMachine,
+        PointMachine,
+        StateDB,
+        YOLOMachine,
+        YOLO_ZONES,
+    )
+    from engine.mastery_gate import MasteryGate, ScoreCard, score_from_dict, DIMENSIONS
+    from engine.workspace_manager import WorkspaceManager
 except ImportError:
     # Allow running from source without installing the package
     sys.path.insert(0, str(_PROJECT_ROOT))
-
-from engine.state_machine import (
-    ConflictError,
-    PhaseMachine,
-    PointMachine,
-    StateDB,
-    YOLOMachine,
-    YOLO_ZONES,
-    PhaseEntry,
-    PointEntry,
-    YOLOState,
-)
-from engine.mastery_gate import MasteryGate, ScoreCard, score_from_dict, DIMENSIONS
-from engine.gate_11 import Gate11Verifier
-from engine.workspace_manager import WorkspaceManager, WorkspaceKind
-from engine.synthesizer import synthesize, write_artifact
-from engine.config import load_config
+    from engine.state_machine import (
+        ConflictError,
+        PhaseMachine,
+        PointMachine,
+        StateDB,
+        YOLOMachine,
+        YOLO_ZONES,
+    )
+    from engine.mastery_gate import MasteryGate, ScoreCard, score_from_dict, DIMENSIONS
+    from engine.workspace_manager import WorkspaceManager
 
 # ---------------------------------------------------------------------------
 # Console output helpers
@@ -72,23 +72,39 @@ def _resolve_db(project_dir: str | None) -> StateDB:
 def _load_project_config(project_dir: str | None) -> dict[str, Any]:
     """Load the merged project config from *project_dir* or CWD.
 
-    Tries: .yaml → .yml → .json
+    Tries YAML paths first, then falls back to equivalent JSON paths
+    so users can use either format (matching :func:`engine.config.load_config`).
     """
     base = Path(project_dir).resolve() if project_dir else Path.cwd().resolve()
-    extensions = [".yaml", ".yml", ".json"]
-    for ext in extensions:
-        config_paths = [
-            base / "configs" / f"config{ext}",
-            base / f"config{ext}",
-            base / "config" / f"config{ext}",
-        ]
-        for p in config_paths:
-            if p.is_file():
-                with open(p) as f:
-                    if ext in (".yaml", ".yml"):
-                        return dict(yaml.safe_load(f) or {})
-                    else:
-                        return dict(json.load(f) or {})
+    config_paths: list[Path] = [
+        base / "configs" / "config.yaml",
+        base / "config.yaml",
+        base / "config" / "config.yaml",
+    ]
+    for p in config_paths:
+        if p.is_file():
+            with open(p) as f:
+                loaded = yaml.safe_load(f) or {}
+                if not isinstance(loaded, dict):
+                    console.print(f"[yellow]Warning: {p} is not a dict, ignoring[/yellow]")
+                    return {}
+                return dict(loaded)
+
+    # JSON fallback — same paths but with .json extension
+    json_fallbacks: list[Path] = [
+        base / "configs" / "config.json",
+        base / "config.json",
+        base / "config" / "config.json",
+    ]
+    for p in json_fallbacks:
+        if p.is_file():
+            with open(p) as f:
+                loaded = json.load(f) or {}
+                if not isinstance(loaded, dict):
+                    console.print(f"[yellow]Warning: {p} is not a dict, ignoring[/yellow]")
+                    return {}
+                return dict(loaded)
+
     # Return empty dict — caller defaults apply
     return {}
 
@@ -151,7 +167,7 @@ def phase_start(ctx: click.Context, phase_name: str) -> None:
         )
     except ValueError as exc:
         console.print(f"[red]Error:[/red] {exc}")
-        sys.exit(1)
+        return
 
 
 @phase.command(name="complete")
@@ -169,10 +185,10 @@ def phase_complete(ctx: click.Context, phase_name: str) -> None:
         )
     except ConflictError as exc:
         console.print(f"[red]Conflict:[/red] {exc}")
-        sys.exit(1)
+        return
     except ValueError as exc:
         console.print(f"[red]Error:[/red] {exc}")
-        sys.exit(1)
+        return
 
 
 @phase.command(name="list")
@@ -238,7 +254,7 @@ def point_create(ctx: click.Context, phase_name: str, point_name: str, agents: i
         )
     except ValueError as exc:
         console.print(f"[red]Error:[/red] {exc}")
-        sys.exit(1)
+        return
 
 
 @point.command(name="complete")
@@ -257,7 +273,7 @@ def point_complete(ctx: click.Context, phase_name: str, point_name: str) -> None
         )
     except ConflictError as exc:
         console.print(f"[red]Conflict:[/red] {exc}")
-        sys.exit(1)
+        return
 
 
 @point.command(name="list")
@@ -332,7 +348,7 @@ def yolo_set(ctx: click.Context, zone_name: str) -> None:
         )
     except ValueError as exc:
         console.print(f"[red]Error:[/red] {exc}")
-        sys.exit(1)
+        return
 
 
 @yolo.command(name="status")
@@ -365,7 +381,7 @@ def yolo_list() -> None:
 @yolo.command(name="error")
 @click.pass_context
 def yolo_error(ctx: click.Context) -> None:
-    """Increment the consecutive error counter (triggers safety valve at 5)."""
+    """Increment the consecutive error counter (max_errors per YOLO zone: safe=3, test=5, staging=10, production=999)."""
     db = _resolve_db(ctx.obj["project_dir"])
     ym = YOLOMachine(db)
     state = ym.increment_errors()
@@ -448,7 +464,7 @@ def gate_evaluate(
             data = json.loads(raw)
         except json.JSONDecodeError as exc:
             console.print(f"[red]Invalid JSON:[/red] {exc}")
-            sys.exit(1)
+            return
         if isinstance(data, dict):
             data = [data]
         agent_scores = [score_from_dict(d) for d in data]
@@ -471,11 +487,11 @@ def gate_evaluate(
     score_lines.append(f"[bold]Agents:[/bold] {out['agents_used']}")
     score_lines.append(f"[bold]Time:[/bold] {out['time_seconds']:.2f}s")
     if out["gaps"]:
-        score_lines.append(f"\n[bold yellow]Gaps:[/bold yellow]")
+        score_lines.append("\n[bold yellow]Gaps:[/bold yellow]")
         for g in out["gaps"]:
             score_lines.append(f"  • {g}")
     else:
-        score_lines.append(f"\n[green]No gaps detected.[/green]")
+        score_lines.append("\n[green]No gaps detected.[/green]")
 
     _print_panel("\n".join(score_lines), title=f"Mastery Gate: {phase}/{point}", style=verdict_style)
 
@@ -534,7 +550,7 @@ def workspace_create(
         )
     except Exception as exc:
         console.print(f"[red]Error:[/red] {exc}")
-        sys.exit(1)
+        return
 
 
 @workspace.command(name="list")

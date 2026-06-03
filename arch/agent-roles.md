@@ -11,10 +11,10 @@ PHASE STRUCTURE
 ═══════════════════════════════════════════════════════════════════
 
 Phase 0: PRD BUILD (66 agents, one-time)
-  ┌──────────────┐  ┌──────────────┐
-  │ 33 research  │  │  33 build    │
-  │ agents       │──▶│  agents      │──▶ Full PRD document
-  └──────────────┘  └──────────────┘
+  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+  │ 22 research  │  │ 22 questions │  │  22 build    │
+  │ agents       │──▶│  agents      │──▶│  agents      │──▶ Full PRD
+  └──────────────┘  └──────────────┘  └──────────────┘
 
 Phase 1: DEVELOPMENT (33 agents)
   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
@@ -22,16 +22,16 @@ Phase 1: DEVELOPMENT (33 agents)
   │ agents       │──▶│  agents      │──▶│  agents      │──▶ Working code
   └──────────────┘  └──────────────┘  └──────────────┘
 
-Phase 2: QUALITY (33 agents)
-  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-  │ 11 audit     │  │  11 improve  │  │  11 review   │
-  │ agents       │──▶│  agents      │──▶│  agents      │──▶ Verified code
-  └──────────────┘  └──────────────┘  └──────────────┘
-
-Phase 3: HUNTING (33 agents)
+Phase 2: HUNTING (33 agents)
   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
   │ 11 bugs      │  │ 11 arch rev  │  │ 11 security  │
   │ agents       │──▶│  agents      │──▶│  agents      │──▶ Hardened code
+  └──────────────┘  └──────────────┘  └──────────────┘
+
+Phase 3: QUALITY (33 agents)
+  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+  │ 11 audit     │  │  11 improve  │  │  11 review   │
+  │ agents       │──▶│  agents      │──▶│  agents      │──▶ Verified code
   └──────────────┘  └──────────────┘  └──────────────┘
 
 Phase 4: SIMPLICITY (33 agents)
@@ -47,7 +47,7 @@ Total: 198 agents per full cycle (Phase 0 one-time = 66 + 132 per cycle)
 
 ## Phase 0: PRD BUILD — 66 Agents
 
-### Research Agent (33 agents)
+### Research Agent (22 agents)
 
 **Title:** Research Agent
 **Description:** Research domain, competitors, best practices, architecture patterns
@@ -60,7 +60,20 @@ Each research agent independently explores the project domain, seeking:
 - Competitor analysis
 - Technology stack recommendations
 
-### Build Agent (33 agents)
+### Questions Agent (22 agents)
+
+**Title:** Questions Agent
+**Description:** Generate precision questions to clarify PRD requirements
+**Skills:** web, multi-source-research
+**Output:** Clarified PRD requirements
+
+Each questions agent produces refinement questions about:
+- Ambiguous or underspecified requirements
+- Edge cases and boundary conditions
+- Cross-domain dependencies
+- Priority and trade-off decisions
+
+### Build Agent (22 agents)
 
 **Title:** PRD Build Agent
 **Description:** Format PRD, generate specs, break down requirements
@@ -121,55 +134,7 @@ Responsibilities:
 
 ---
 
-## Phase 2: QUALITY — 33 Agents
-
-### Audit Agent (11 agents)
-
-**Title:** Audit Agent
-**Description:** Code audit — syntax, logic, structure, edge cases
-**Skills:** codebase-audit, systematic-debugging
-**Output:** Audit findings report
-
-Checklist:
-- Syntax errors and type mismatches
-- Logic errors in conditionals
-- Missing error handling
-- Dead code and unused imports
-- Code style violations
-- Edge case gaps
-
-### Improve Agent (11 agents)
-
-**Title:** Improve Agent
-**Description:** Fix critical issues, add missing features, polish
-**Skills:** systematic-debugging
-**Output:** Improved codebase
-
-Responsibilities:
-- Address audit findings
-- Fix identified bugs
-- Add missing error handling
-- Improve code structure
-- Polish rough edges
-- Add documentation where missing
-
-### Review Agent (11 agents)
-
-**Title:** Review Agent
-**Description:** Verify fixes, quality gate, regression check
-**Skills:** requesting-code-review
-**Output:** Quality gate verdict
-
-Checklist:
-- Verify all audit issues are addressed
-- Check for regression bugs
-- Validate test coverage
-- Review documentation completeness
-- Provide quality gate verdict
-
----
-
-## Phase 3: HUNTING — 33 Agents
+## Phase 2: HUNTING — 33 Agents
 
 ### Bug Hunter Agent (11 agents)
 
@@ -220,6 +185,54 @@ Checklist:
 - Authentication bypass
 - Path traversal
 - Cryptographic weaknesses
+
+---
+
+## Phase 3: QUALITY — 33 Agents
+
+### Audit Agent (11 agents)
+
+**Title:** Audit Agent
+**Description:** Code audit — syntax, logic, structure, edge cases
+**Skills:** codebase-audit, systematic-debugging
+**Output:** Audit findings report
+
+Checklist:
+- Syntax errors and type mismatches
+- Logic errors in conditionals
+- Missing error handling
+- Dead code and unused imports
+- Code style violations
+- Edge case gaps
+
+### Improve Agent (11 agents)
+
+**Title:** Improve Agent
+**Description:** Fix critical issues, add missing features, polish
+**Skills:** systematic-debugging
+**Output:** Improved codebase
+
+Responsibilities:
+- Address audit findings
+- Fix identified bugs
+- Add missing error handling
+- Improve code structure
+- Polish rough edges
+- Add documentation where missing
+
+### Review Agent (11 agents)
+
+**Title:** Review Agent
+**Description:** Verify fixes, quality gate, regression check
+**Skills:** requesting-code-review
+**Output:** Quality gate verdict
+
+Checklist:
+- Verify all audit issues are addressed
+- Check for regression bugs
+- Validate test coverage
+- Review documentation completeness
+- Provide quality gate verdict
 
 ---
 

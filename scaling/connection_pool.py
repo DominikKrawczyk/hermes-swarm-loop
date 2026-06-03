@@ -116,17 +116,20 @@ class ConnectionPool(Generic[T]):
     @property
     def size(self) -> int:
         """Total number of connections (idle + in-use)."""
-        return len(self._pool) + len(self._in_use)
+        with self._lock:
+            return len(self._pool) + len(self._in_use)
 
     @property
     def idle(self) -> int:
         """Number of idle connections ready for reuse."""
-        return len(self._pool)
+        with self._lock:
+            return len(self._pool)
 
     @property
     def in_use(self) -> int:
         """Number of connections currently in use."""
-        return len(self._in_use)
+        with self._lock:
+            return len(self._in_use)
 
     @property
     def stats(self) -> PoolStats:
@@ -155,12 +158,14 @@ class ConnectionPool(Generic[T]):
     @property
     def available(self) -> int:
         """Alias for idle (test compatibility)."""
-        return len(self._pool)
+        with self._lock:
+            return len(self._pool)
 
     @property
     def active(self) -> int:
         """Alias for in_use (test compatibility)."""
-        return len(self._in_use)
+        with self._lock:
+            return len(self._in_use)
 
     # ── acquire / release ─────────────────────────────────────────────
 
@@ -173,6 +178,7 @@ class ConnectionPool(Generic[T]):
         deadline = time.monotonic() + (
             timeout if timeout is not None else self.acquire_timeout
         )
+        counted_wait = False
         while True:
             with self._lock:
                 if self._closed:
@@ -194,8 +200,6 @@ class ConnectionPool(Generic[T]):
                     return c
 
             # At capacity — wait for a release
-            with self._lock:
-                self._waits += 1
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 with self._lock:
@@ -203,8 +207,15 @@ class ConnectionPool(Generic[T]):
                 raise ConnectionTimeoutError(
                     f"Timeout after {timeout or self.acquire_timeout}s"
                 )
+            if not counted_wait:
+                with self._lock:
+                    self._waits += 1
+                counted_wait = True
             self._available_event.wait(timeout=min(remaining, 0.1))
-            self._available_event.clear()
+            # Do NOT clear() the event here — another thread may have set it
+            # between wait() returning and us re-acquiring the lock. The
+            # event is a level-triggered signal; stale wakeup is handled by
+            # re-checking pool state under the lock.
 
     def release(self, conn: T) -> None:
         """Return a raw connection to the pool.
@@ -248,14 +259,24 @@ class ConnectionPool(Generic[T]):
         """Pre-populate the idle pool with *count* connections."""
         if count < 0:
             raise ValueError(f"count must be >= 0, got {count}")
+        # Create all connections outside the lock so factory() doesn't
+        # block other pool operations (network I/O, etc.).
+        created = []
+        for _ in range(count):
+            created.append(PooledConnection(self.factory(), self))
         with self._lock:
             if len(self._pool) + len(self._in_use) + count > self.max_size:
+                # Roll back: close created connections
+                for c in created:
+                    if self.close_fn:
+                        try:
+                            self.close_fn(c.resource)
+                        except Exception:
+                            pass
                 raise ValueError(
                     f"cannot warm {count}, would exceed {self.max_size}"
                 )
-            for _ in range(count):
-                r = self.factory()
-                self._pool.append(PooledConnection(r, self))
+            self._pool.extend(created)
 
     def close(self) -> None:
         """Close the pool and evict all idle connections."""
@@ -269,6 +290,8 @@ class ConnectionPool(Generic[T]):
         with self._lock:
             self._closed = True
             self._evict_all_idle()
+            for pc in self._in_use:
+                self._discard_internal(pc)
             self._in_use.clear()
             self._available_event.set()
 
@@ -278,6 +301,11 @@ class ConnectionPool(Generic[T]):
         """Internal release — called by PooledConnection.close()."""
         with self._lock:
             self._in_use.discard(conn)
+            # Guard against double-track: check if conn resource is already idle
+            for pc in self._pool:
+                if pc.resource is conn.resource:
+                    self._available_event.set()
+                    return
             if self._closed:
                 self._discard_internal(conn)
             else:

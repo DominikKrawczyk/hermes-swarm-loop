@@ -20,15 +20,6 @@ class CASEntry:
         self.version = version
 
 
-class ConflictError(Exception):
-    """Backward-compatible CAS conflict error.
-
-    Raised only by consumers that explicitly catch it; never raised
-    by the current in-memory CASStore.
-    """
-    pass
-
-
 class CASStore:
     """In-memory compare-and-swap store.
 

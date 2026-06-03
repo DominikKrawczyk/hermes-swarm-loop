@@ -35,7 +35,7 @@ class TestAgentRoles:
         assert len(AGENT_ROLES["simplicity"]) == 33
 
     def test_all_phases_present(self):
-        for phase in ("prd_build", "development", "quality", "hunting", "simplicity"):
+        for phase in ("prd_build", "development", "hunting", "quality", "simplicity"):
             assert phase in AGENT_ROLES
 
     def test_get_roles_for_phase(self):
@@ -57,13 +57,19 @@ class TestAgentRoles:
     def test_get_role_not_found(self):
         assert get_role("ghost_role_99") is None
 
-    def test_prd_build_researchers_are_first_33(self):
+    def test_prd_build_researchers_are_22(self):
         researchers = [r for r in AGENT_ROLES["prd_build"] if r["kind"] == "research"]
-        assert len(researchers) == 33
+        assert len(researchers) == 22
 
-    def test_prd_build_builders_are_last_33(self):
+    def test_prd_build_question_agents_are_22(self):
+        question_agents = [r for r in AGENT_ROLES["prd_build"] if r["kind"] == "questions"]
+        assert len(question_agents) == 22
+        for qa in question_agents:
+            assert qa["name"].startswith("prd_question_")
+
+    def test_prd_build_builders_are_22(self):
         builders = [r for r in AGENT_ROLES["prd_build"] if r["kind"] == "build"]
-        assert len(builders) == 33
+        assert len(builders) == 22
 
     def test_every_role_has_required_fields(self):
         for phase, roles in AGENT_ROLES.items():

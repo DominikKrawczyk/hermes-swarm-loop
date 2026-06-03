@@ -4,7 +4,7 @@
 # ─── Project ───────────────────────────────────────────────────────────────
 project:
   name: "Hermes Swarm Loop"
-  version: "6.4.0"
+  version: "6.5.1"
   description: "3x3x11 autonomous build framework for Hermes Agent"
 
 # ─── Phase Configuration ───────────────────────────────────────────────────

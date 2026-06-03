@@ -39,7 +39,12 @@ def synthesize(
 
     for agent_out in completed:
         output = agent_out.get("output", {})
-        findings = output if isinstance(output, list) else output.get("findings", [])
+        if isinstance(output, list):
+            findings = output
+        elif isinstance(output, dict):
+            findings = output.get("findings", [])
+        else:
+            findings = []
 
         for finding in findings if isinstance(findings, list) else [findings]:
             # Dedup by content hash

@@ -93,16 +93,21 @@ class Gate11Verifier:
             )
             return result
 
-        for h in handoffs:
+        for i, h in enumerate(handoffs):
+            if not isinstance(h, dict):
+                result.errors.append(f"Worker index {i}: expected dict, got {type(h).__name__}")
+                continue
             wid = h.get("worker_id", "unknown")
             v = self.validate_handoff(h, wid)
             result.validations.append(v)
             if not v.valid:
                 result.errors.append(f"Worker {wid}: {'; '.join(v.errors)}")
 
-        completed = sum(1 for h in handoffs if h.get("status") == "done")
+        # Only count completed from valid dict handoffs to avoid AttributeError on non-dict
+        dict_handoffs = [h for h in handoffs if isinstance(h, dict)]
+        completed = sum(1 for h in dict_handoffs if h.get("status") == "done")
         result.completed_agents = completed
-        result.all_done = completed >= self.REQUIRED_COUNT
+        result.all_done = completed >= len(dict_handoffs) and completed >= self.REQUIRED_COUNT
         result.passed = result.all_done and len(result.errors) == 0
         return result
 

@@ -48,13 +48,19 @@ DEFAULT_YOLO_CONFIG: dict[str, Any] = {
 
 
 def load_yaml(path: Path) -> dict[str, Any] | None:
-    """Load a YAML file. Returns None if YAML is not available."""
+    """Load a YAML file. Returns None if YAML is not available or parsing fails."""
     if not path.exists():
         return None
     if not _HAS_YAML:
         return None
-    with open(path) as f:
-        return _yaml.safe_load(f)  # type: ignore
+    try:
+        with open(path) as f:
+            loaded = _yaml.safe_load(f)  # type: ignore
+        if not isinstance(loaded, dict):
+            return None
+        return loaded
+    except Exception:
+        return None
 
 
 def load_json(path: Path) -> dict[str, Any] | None:
@@ -76,7 +82,10 @@ def load_config(filename: str, defaults: dict[str, Any]) -> dict[str, Any]:
     stem = Path(filename).stem
     for ext in [".yaml", ".yml", ".json"]:
         path = CONFIG_DIR / f"{stem}{ext}"
-        loaded = load_yaml(path) if ext in (".yaml", ".yml") else load_json(path)
+        if ext in (".yaml", ".yml"):
+            loaded = load_yaml(path)
+        else:
+            loaded = load_json(path)
         if loaded is not None:
             return _deep_merge(defaults, loaded)
     return defaults
@@ -86,8 +95,10 @@ def load_scaling_config(path: str | None = None) -> dict[str, Any]:
     """Load scaling config, merging file over defaults."""
     if path:
         p = Path(path)
-        loaded = load_yaml(p) or load_json(p)
-        if loaded:
+        loaded = load_yaml(p)
+        if loaded is None:
+            loaded = load_json(p)
+        if loaded is not None:
             return _deep_merge(DEFAULT_SCALING_CONFIG, loaded)
     return load_config("scaling_config", DEFAULT_SCALING_CONFIG)
 
@@ -96,8 +107,10 @@ def load_yolo_config(path: str | None = None) -> dict[str, Any]:
     """Load YOLO config, merging file over defaults."""
     if path:
         p = Path(path)
-        loaded = load_yaml(p) or load_json(p)
-        if loaded:
+        loaded = load_yaml(p)
+        if loaded is None:
+            loaded = load_json(p)
+        if loaded is not None:
             return _deep_merge(DEFAULT_YOLO_CONFIG, loaded)
     return load_config("yolo_config", DEFAULT_YOLO_CONFIG)
 

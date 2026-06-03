@@ -1,12 +1,12 @@
 # Hermes Swarm Loop — Architecture Overview
 
-**Version:** 6.4.0
+**Version:** 6.10.0
 **Author:** Edward Puszczyk (github: DominikKrawczyk)
 **License:** MIT
 
 ## Overview
 
-The Hermes Swarm Loop is a **3-phase × 3-point × 11-agent** autonomous build framework
+The Hermes Swarm Loop is a **4-phase × 3-point × 11-agent** autonomous build framework
 for AI-powered software development. It orchestrates parallel Hermes Agent workers
 through a structured pipeline of phases, points, and gates to build anything from
 blockchain infrastructure to complex applications.
@@ -19,7 +19,7 @@ blockchain infrastructure to complex applications.
 │                                                                 │
 │  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐     │
 │  │  PHASE 1 │   │  PHASE 2 │   │  PHASE 3 │   │  PHASE 4 │     │
-│  │ PRD BUILD│──▶│DEVELOPMENT│──▶│ QUALITY  │──▶│ HUNTING  │     │
+│  │ PRD BUILD│──▶│DEVELOPMENT│──▶│ HUNTING  │──▶│ QUALITY  │     │
 │  │ (66 ag)  │   │ (33 ag)  │   │ (33 ag)  │   │ (33 ag)  │     │
 │  └──────────┘   └──────────┘   └──────────┘   └──────────┘     │
 │                                           │                     │

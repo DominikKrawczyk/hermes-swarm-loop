@@ -69,14 +69,17 @@ class CircuitBreaker:
         self._last_failure_time: float = 0.0
         self._lock = threading.RLock()
         self._on_state_change: Callable[[CircuitState, CircuitState], None] | None = None
+        self._half_open_max_probes: int = 1
+        self._half_open_in_flight: int = 0
 
     # -- State property ---------------------------------------------------------
 
     @property
     def state(self) -> CircuitState:
         """Current circuit breaker state (auto-transitions on read if timeout elapsed)."""
-        self._check_timeout()
-        return self._state
+        with self._lock:
+            self._check_timeout()
+            return self._state
 
     # -- Convenience properties -------------------------------------------------
 
@@ -95,23 +98,33 @@ class CircuitBreaker:
     # -- Public API -------------------------------------------------------------
 
     def allows_request(self) -> bool:
-        """Return True if the circuit accepts requests (CLOSED or HALF_OPEN)."""
+        """Return True if the circuit accepts requests (CLOSED or HALF_OPEN with capacity)."""
         with self._lock:
             self._check_timeout()
-            return self._state != CircuitState.OPEN
+            if self._state == CircuitState.CLOSED:
+                return True
+            if self._state == CircuitState.HALF_OPEN:
+                if self._half_open_in_flight < self._half_open_max_probes:
+                    self._half_open_in_flight += 1
+                    return True
+            return False
 
     def record_success(self) -> None:
         """Record a successful call.
 
         In HALF_OPEN state, increments the consecutive success counter.
         Transitions to CLOSED when consecutive_successes_to_close is reached.
+        If the circuit is OPEN but recovery timeout has elapsed,
+        transitions to HALF_OPEN first.
         """
         with self._lock:
+            self._check_timeout()
             if self._state == CircuitState.OPEN:
                 return
             self._consecutive_failures = 0
 
             if self._state == CircuitState.HALF_OPEN:
+                self._half_open_in_flight = max(0, self._half_open_in_flight - 1)
                 self._consecutive_successes += 1
                 if self._consecutive_successes >= self.consecutive_successes_to_close:
                     self._transition(CircuitState.CLOSED)
@@ -123,6 +136,7 @@ class CircuitBreaker:
 
         In CLOSED state, increments the failure counter and opens the circuit
         when the threshold is reached. In HALF_OPEN state, immediately re-opens.
+        Decrements the HALF_OPEN in-flight counter if applicable.
         """
         with self._lock:
             self._consecutive_failures += 1
@@ -130,6 +144,7 @@ class CircuitBreaker:
             self._last_failure_time = time.monotonic()
 
             if self._state == CircuitState.HALF_OPEN:
+                self._half_open_in_flight = max(0, self._half_open_in_flight - 1)
                 self._transition(CircuitState.OPEN)
             elif (
                 self._state == CircuitState.CLOSED
@@ -144,6 +159,7 @@ class CircuitBreaker:
             self._state = CircuitState.CLOSED
             self._consecutive_failures = 0
             self._consecutive_successes = 0
+            self._half_open_in_flight = 0
             self._last_failure_time = 0.0
             if old != CircuitState.CLOSED:
                 self._notify_state_change(old, CircuitState.CLOSED)
@@ -189,6 +205,9 @@ class CircuitBreaker:
         self._state = new_state
         if new_state == CircuitState.HALF_OPEN:
             self._consecutive_successes = 0
+            self._half_open_in_flight = 0
+        if new_state == CircuitState.CLOSED:
+            self._half_open_in_flight = 0
         self._notify_state_change(old, new_state)
 
     def _notify_state_change(

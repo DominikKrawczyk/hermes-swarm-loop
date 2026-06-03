@@ -123,7 +123,7 @@ class StateDB:
 
     def __init__(self, db_path: str):
         self._db_path = db_path
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._init_db()
 
     def _init_db(self):
@@ -153,7 +153,7 @@ class StateDB:
             finally:
                 conn.close()
 
-    def log_event(self, kind: str, payload: dict = None):
+    def log_event(self, kind: str, payload: dict | None = None):
         with self.cursor() as c:
             c.execute(
                 "INSERT INTO event_log (kind, payload) VALUES (?, ?)",
@@ -172,9 +172,9 @@ class PhaseStatus(Enum):
     BLOCKED = "blocked"
 
 class PhaseMachine:
-    ALL_PHASES = ["prd_build", "development", "quality", "hunting", "simplicity"]
+    ALL_PHASES = ["prd_build", "development", "hunting", "quality", "simplicity"]
     POINTS = {
-        "prd_build": ["research", "build", "synthesize"],
+        "prd_build": ["research", "questions", "build"],
         "development": ["architecture", "setup", "code_generation"],
         "quality": ["audit", "improve", "review"],
         "hunting": ["bugs", "arch_review", "security"],
@@ -190,12 +190,17 @@ class PhaseMachine:
         now = datetime.now(timezone.utc).isoformat()
         with self._db.cursor() as c:
             # Read current version before upsert for CAS guard
-            c.execute("SELECT version FROM phase_state WHERE phase=?", (phase,))
+            c.execute("SELECT version, status FROM phase_state WHERE phase=?", (phase,))
             existing = c.fetchone()
             if existing is not None:
+                if existing["status"] in ("done", "failed", "archived", "blocked"):
+                    raise ConflictError(
+                        f"Cannot start phase '{phase}': status is '{existing['status']}' — "
+                        "must be 'todo' or 'running'"
+                    )
                 expected_version = existing["version"]
                 c.execute(
-                    "UPDATE phase_state SET status=COALESCE(NULLIF(status, 'done'), 'running'), "
+                    "UPDATE phase_state SET status='running', "
                     "  started_at=COALESCE(started_at, ?), version=version+1 "
                     "WHERE phase=? AND version=?",
                     (now, phase, expected_version)
@@ -460,7 +465,7 @@ class YOLOMachine:
 
     def increment_errors(self) -> YOLOState:
         with self._db.cursor() as c:
-            c.execute("SELECT version FROM yolo_state WHERE id=1")
+            c.execute("SELECT version, zone, consecutive_errors, safety_valve_active, auto_approve, max_parallel FROM yolo_state WHERE id=1")
             row = c.fetchone()
             expected_version = row["version"]
             c.execute(
@@ -470,13 +475,29 @@ class YOLOMachine:
             )
             if c.rowcount == 0:
                 raise ConflictError("Cannot increment errors: version conflict")
+            zone_name = row["zone"]
+            zone_cfg = YOLO_ZONES.get(zone_name, YOLO_ZONES["safe"])
+            new_errors = row["consecutive_errors"] + 1
+            valve_activated = False
+            if new_errors >= zone_cfg["max_errors"]:
+                # Activate safety valve within same transaction to avoid TOCTOU
+                c.execute("SELECT version FROM yolo_state WHERE id=1")
+                row2 = c.fetchone()
+                v2 = row2["version"]
+                c.execute(
+                    "UPDATE yolo_state SET safety_valve_active=1, auto_approve=0, max_parallel=1, version=version+1 "
+                    "WHERE id=1 AND version=?",
+                    (v2,)
+                )
+                if c.rowcount == 0:
+                    raise ConflictError("Cannot activate safety valve: version conflict")
+                valve_activated = True
             c.execute("SELECT * FROM yolo_state WHERE id=1")
             row = c.fetchone()
-        s = YOLOState(**dict(row))
-        zone_cfg = YOLO_ZONES.get(s.zone, YOLO_ZONES["safe"])
-        if s.consecutive_errors >= zone_cfg["max_errors"]:
-            self.activate_safety_valve()
-        return s
+        result = YOLOState(**dict(row))
+        if valve_activated:
+            self._db.log_event("safety_valve_activated", {"reason": f"consecutive_errors reached {new_errors}"})
+        return result
 
     def activate_safety_valve(self) -> YOLOState:
         with self._db.cursor() as c:

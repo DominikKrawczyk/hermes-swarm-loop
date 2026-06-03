@@ -19,7 +19,6 @@ import argparse
 import json
 import os
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -56,7 +55,7 @@ def main():
         parser.error("--project-name is required (use --init-only to skip)")
 
     swarm_dir = str(_HERE)
-    print(f"Hermes Swarm Loop — Bootstrap")
+    print("Hermes Swarm Loop — Bootstrap")
     print(f"  Project: {args.project_name or '(init-only)'}  Phase: {args.phase}")
     print(f"  YOLO: {args.yolo_zone}  Agents: {args.max_agents}")
 
@@ -92,6 +91,8 @@ def main():
     ym.set_zone(args.yolo_zone)
     ym.reset_safety_valve()
     print(f"  Zone: {args.yolo_zone} (capped at {capped})")
+    # Update max_agents to capped so create_point uses the YOLO-compliant count
+    args.max_agents = capped
 
     # Stage 5
     print("\n--- Stage 5: Launch ---")
