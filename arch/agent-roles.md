@@ -11,10 +11,10 @@ PHASE STRUCTURE
 ═══════════════════════════════════════════════════════════════════
 
 Phase 0: PRD BUILD (66 agents, one-time)
-  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-  │ 22 research  │  │ 22 questions │  │  22 build    │
-  │ agents       │──▶│  agents      │──▶│  agents      │──▶ Full PRD
-  └──────────────┘  └──────────────┘  └──────────────┘
+  ┌──────────────────────────────┐
+  │      66 build agents         │
+  │ (research + questions + PRD) │──▶ Full PRD
+  └──────────────────────────────┘
 
 Phase 1: DEVELOPMENT (33 agents)
   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
@@ -47,44 +47,17 @@ Total: 198 agents per full cycle (Phase 0 one-time = 66 + 132 per cycle)
 
 ## Phase 0: PRD BUILD — 66 Agents
 
-### Research Agent (22 agents)
-
-**Title:** Research Agent
-**Description:** Research domain, competitors, best practices, architecture patterns
-**Skills:** web, writing-plans, multi-source-research
-**Output:** Research findings organized by domain
-
-Each research agent independently explores the project domain, seeking:
-- Existing solutions and architectures
-- Best practices and design patterns
-- Competitor analysis
-- Technology stack recommendations
-
-### Questions Agent (22 agents)
-
-**Title:** Questions Agent
-**Description:** Generate precision questions to clarify PRD requirements
-**Skills:** web, multi-source-research
-**Output:** Clarified PRD requirements
-
-Each questions agent produces refinement questions about:
-- Ambiguous or underspecified requirements
-- Edge cases and boundary conditions
-- Cross-domain dependencies
-- Priority and trade-off decisions
-
-### Build Agent (22 agents)
+### Build Agent (66 agents)
 
 **Title:** PRD Build Agent
-**Description:** Format PRD, generate specs, break down requirements
-**Skills:** writing-plans, product-requirements-document
+**Description:** Full PRD generation — research, web search, precision questions, requirements documentation
+**Skills:** web, writing-plans, multi-source-research, product-requirements-document
 **Output:** Professional PRD document
 
-Each build agent synthesizes research findings into:
-- Structured product requirements
-- Feature breakdowns
-- Technical specifications
-- User story mapping
+Each build agent independently:
+- Researches domain, competitors, architecture patterns
+- Generates precision questions to clarify requirements
+- Produces structured PRD with specs, features, user stories
 
 ---
 

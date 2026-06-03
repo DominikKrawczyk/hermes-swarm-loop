@@ -31,17 +31,9 @@ def _domain_for(index: int) -> str:
 
 AGENT_ROLES: dict[str, list[dict[str, Any]]] = {
     "prd_build": [
-        {"name": f"prd_researcher_{i:02d}", "kind": "research",
-         "domain": _domain_for(i), "description": f"Research agent {i} — {_domain_for(i)}"}
-        for i in range(1, 23)
-    ] + [
-        {"name": f"prd_question_{i:02d}", "kind": "questions",
-         "domain": _domain_for(i), "description": f"Questions agent {i} — {_domain_for(i)}"}
-        for i in range(1, 23)
-    ] + [
         {"name": f"prd_builder_{i:02d}", "kind": "build",
-         "domain": _domain_for(i), "description": f"Build agent {i} — {_domain_for(i)}"}
-        for i in range(1, 23)
+         "domain": _domain_for(i), "description": f"PRD build agent {i} — {_domain_for(i)}"}
+        for i in range(1, 67)
     ],
     "development": [
         {"name": f"architect_{i:02d}", "kind": "architecture",

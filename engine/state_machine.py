@@ -174,7 +174,7 @@ class PhaseStatus(Enum):
 class PhaseMachine:
     ALL_PHASES = ["prd_build", "development", "hunting", "quality", "simplicity"]
     POINTS = {
-        "prd_build": ["research", "questions", "build"],
+        "prd_build": ["build"],
         "development": ["architecture", "setup", "code_generation"],
         "quality": ["audit", "improve", "review"],
         "hunting": ["bugs", "arch_review", "security"],

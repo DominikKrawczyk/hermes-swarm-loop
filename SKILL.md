@@ -9,10 +9,10 @@ license: MIT
 
 # Hermes Swarm Loop — 3 × 3 × 11
 
-```\nPhase 0: PRD BUILD — 66 agents (research 22 + questions 22 + build 22) — one-time, until full PRD done\nPhase 1: ARCHITECTURE 11 + SETUP 11 + CODE GENERATION 11\nPhase 2: BUGS 11 + ARCH 11 + SECURITY 11 (HUNTING — find bugs FIRST)\nPhase 3: AUDIT 11 + IMPROVE 11 + REVIEW 11 (QUALITY — fix based on real bugs)\nSimplicity: Dead Code 11 + Occam 11 + PRD Alignment 11\n\nCycle 1: BUILD | Cycle 2+: HUNT→QUALITY swap loop\nMastery Gate: diversified non-local per PRD area — check across all areas, not just one\nAuto Skill Update: after each phase, skill learns & evolves\nGate: 11 per point | Forced points | Auto-detect | YOLO default ON | Scale 11→999\n```
+```\nPhase 0: PRD BUILD — 66 agents (all build — research + questions + PRD) — one-time, until full PRD done\nPhase 1: ARCHITECTURE 11 + SETUP 11 + CODE GENERATION 11\nPhase 2: BUGS 11 + ARCH 11 + SECURITY 11 (HUNTING — find bugs FIRST)\nPhase 3: AUDIT 11 + IMPROVE 11 + REVIEW 11 (QUALITY — fix based on real bugs)\nSimplicity: Dead Code 11 + Occam 11 + PRD Alignment 11\n\nCycle 1: BUILD | Cycle 2+: HUNT→QUALITY swap loop\nMastery Gate: diversified non-local per PRD area — check across all areas, not just one\nAuto Skill Update: after each phase, skill learns & evolves\nGate: 11 per point | Forced points | Auto-detect | YOLO default ON | Scale 11→999\n```
 
 ## Phase 0 — PRD BUILD (66 agents, one-time)
-66 agents: 22 research + 22 questions + 22 build. Runs until full PRD is complete.
+66 agents: 66 build — research, web search, precision questions, full PRD. Runs until complete.
 
 → Auto Skill Update: skill saves PRD structure and findings
 → **Mastery Gate**: diversified non-local check across all PRD areas
