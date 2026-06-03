@@ -1,156 +1,172 @@
-# 🐝 Hermes Swarm Loop — 3×3×3×N
+# 🐝 Hermes Swarm Loop — 5-Phase Autonomous Build Framework
 
-**Build anything — blockchain, infrastructure, complex applications — with 3-loop autonomous iteration, hive swarm (33→999 agents), cross-model review, and self-reflection that determines when something is truly a masterpiece.**
+**Build anything — from zero to production-ready — with structured phases, parallel agent swarms (11→999), and iterative quality loops.**
 
-Inspired by the best of: [Ralph Loop](https://github.com/snarktank/ralph) (19.8k⭐) × [Ralphy](https://github.com/michaelshimeles/ralphy) (2.9k⭐) × [ARIS](https://github.com/wanshuiyin/Auto-claude-code-research-in-sleep) (11.2k⭐) × [Hive](https://github.com/aden-hive/hive) (10.5k⭐)
+Inspired by Ralph (19.8k⭐) × Ralphy (2.9k⭐) × ARIS (11.2k⭐) × Hive (10.5k⭐)
 
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│             LOOP 1: DEVELOPMENT (AUDIT → IMPROVE → REVIEW)           │
-│                   × 3 sub-iterations each × N agents                 │
-├──────────────────────────────────────────────────────────────────────┤
-│             LOOP 2: HUNTING (BUGS → ARCHITECTURE → SECURITY)         │
-│                   × 3 depths each × N agents                         │
-├──────────────────────────────────────────────────────────────────────┤
-│             LOOP 3: SIMPLICITY & CONSOLIDATION                       │
-│             1. Dead Code Audit + Consolidate (NOT destroy)           │
-│             2. Occam's Razor (bottlenecks reduction)                 │
-│             3. PRD Alignment ← BACK TO LOOP 1                        │
-├──────────────────────────────────────────────────────────────────────┤
-│             SELF-REFLECTION JURY × cross-model review                │
-│             → MASTERPIECE / FLAWED (loop again) / CAN'T IMPROVE      │
-│             SWARM: 33→999 agents | YOLO mode                         │
-└──────────────────────────────────────────────────────────────────────┘
-```
-
-## 🚀 Quick Start
-
-This is a **prompt/skill methodology** for [Hermes Agent](https://github.com/DominikKrawczyk/hermes-agent). No Python code to run—just load the skill.
+## 🔥 Quick Start
 
 ```bash
-# Clone
+# Clone — works immediately, tests pass out of the box
 git clone https://github.com/DominikKrawczyk/hermes-swarm-loop.git
 cd hermes-swarm-loop
+python3 -m pytest tests/    # 375+ tests ✅
 
-# Use as a skill in Hermes:
-# "Load the hermes-swarm-loop skill and run a 3-loop cycle on /path/to/project — N=33, yolo"
+# === PHASE 0: PRD BUILD ===
+# 66 build agents: research + web search + precision questions + full PRD
+# NO approval prompts — full YOLO mode, zero timeout
+python3 bootstrap.py \
+  --project-name "EmailPlatform" \
+  --project-desc "Multi-tenant email delivery platform with Next.js frontend, FastAPI backend, Docker" \
+  --phase prd_build \
+  --yolo-zone staging \
+  --max-agents 66
 
-# Eat your own dogfood:
-# "Load the hermes-swarm-loop skill and run a 3-loop cycle on /opt/hermes-swarm-loop/ — N=33"
+# === PHASE 1: DEVELOPMENT ===
+# ARCH (11) → SETUP (11) → CODE GENERATION (11) = 33 agents
+python3 bootstrap.py \
+  --project-name "EmailPlatform" \
+  --phase development \
+  --yolo-zone test \
+  --max-agents 33
+
+# === PHASE 2: HUNTING (find bugs FIRST) ===
+# BUGS (11) → ARCH REVIEW (11) → SECURITY (11) = 33 agents
+python3 bootstrap.py \
+  --project-name "EmailPlatform" \
+  --phase hunting \
+  --yolo-zone test \
+  --max-agents 33
+
+# === PHASE 3: QUALITY (fix based on real bugs) ===
+# AUDIT (11) → IMPROVE (11) → REVIEW (11) = 33 agents
+python3 bootstrap.py \
+  --project-name "EmailPlatform" \
+  --phase quality \
+  --yolo-zone test \
+  --max-agents 33
+
+# === FULL CYCLE (Phase 0→1→2→3) ===
+python3 bootstrap.py \
+  --project-name "EmailPlatform" \
+  --project-desc "..." \
+  --yolo-zone staging \
+  --max-agents 999
 ```
 
-## 🧠 The 3×3×3×N Architecture
+## 🧠 Architecture
 
-### Loop 1 — Development (AUDIT → IMPROVE → REVIEW)
+```
+Phase 0: PRD BUILD — 66 agents (all build — research + questions + PRD)
+Phase 1: DEVELOPMENT — ARCH (11) → SETUP (11) → CODE (11)
+Phase 2: HUNTING — BUGS (11) → ARCH REVIEW (11) → SECURITY (11)   ← RUNS FIRST
+Phase 3: QUALITY — AUDIT (11) → IMPROVE (11) → REVIEW (11)        ← THEN FIX
 
-| Point | Sub 1 | Sub 2 | Sub 3 |
-|-------|-------|-------|-------|
-| **AUDIT** | Surface: syntax, types, structure | Deep: logic, state, error handling | Exhaustive: all files, edge cases, docs |
-| **IMPROVE** | Critical: security, crashes | Feature: missing functionality | Polish: perf, docs, quality |
-| **REVIEW** | Auto-verify: lint, test, build | Manual logic review | Final quality gate |
+Loop: Phase 2 → Phase 3 → Mastery Gate → PASS? → Done
+                                           ↓ NO
+                                    Phase 2 → Phase 3 → Gate → ...
+```
 
-### Loop 2 — Hunting (BUGS → ARCHITECTURE → SECURITY)
+### Phase 0 — PRD BUILD (66 agents)
+66 build agents — każdy robi research + web search + questions + PRD w jednym. Zero timeout, zero approval. Produkuje `PRD.md`.
 
-| Hunt | L1: Surface | L2: Deep | L3: Expert |
-|------|-------------|----------|------------|
-| **🐛 BUGS** | Syntax, null pointers, off-by-one | Race conditions, memory leaks | Heisenbugs, protocol violations |
-| **🏗️ ARCH** | Structure, naming, patterns | Coupling, SOLID, DI, tech debt | Scalability, CAP, distributed |
-| **🔒 SECURITY** | Secrets, injection, auth | OWASP Top 10 (XSS, CSRF, IDOR) | Crypto, side channels, supply chain |
+### Phase 1 — Development (33 agents)
+| Point | Agents | Output |
+|-------|--------|--------|
+| ARCHITECTURE | 11 | System design, component diagrams |
+| SETUP | 11 | Project scaffold, configs, CI/CD |
+| CODE GENERATION | 11 | Working implementation |
 
-### Loop 3 — Simplicity & Consolidation
+### Phase 2 — Hunting (33 agents) — NOW RUNS FIRST
+| Point | Agents | Output |
+|-------|--------|--------|
+| BUGS | 11 | Bug hunting — real bugs found |
+| ARCH REVIEW | 11 | Architecture review, SOLID |
+| SECURITY | 11 | Security audit |
 
-1. **Dead Code Audit + Consolidation** — find dead/redundant code, REPOSITION rather than delete, consolidate into shared utilities, slight architectural refactoring (no rewrites)
-2. **Operational Occam's Razor** — eliminate testing bottlenecks, CI/CD inefficiencies, build/deploy slowdowns, tooling overhead
-3. **PRD Alignment Audit** — compare HAP (current state) vs PRD vision, account for Loop 1 & 2 changes, feed PRD gap errors back to Loop 1. **ALIGNMENT, not further looping.**
+### Phase 3 — Quality (33 agents) — NOW RUNS SECOND
+| Point | Agents | Output |
+|-------|--------|--------|
+| AUDIT | 11 | Code audit on ground truth |
+| IMPROVE | 11 | Fixes based on real bugs |
+| REVIEW | 11 | Quality gate |
 
-### Self-Reflection Jury
+## 🔄 Loop Flow
 
-After all 3 loops complete, a cross-model jury evaluates on 5 dimensions:
+```
+Phase 1 (DEVELOPMENT) ── runs ONCE
+    ↓
+Phase 2 (HUNTING) ── find bugs FIRST
+    ↓
+Phase 3 (QUALITY) ── then fix
+    ↓
+Mastery Gate ──→ PASS? → Done
+    |               |
+    NO ←────────────┘
+    (loop Phase 2→Phase 3→Gate)
+```
 
-| Dimension | Score (0-1) | Evidence |
-|-----------|-------------|----------|
-| Code Quality | ≥ 0.85 | Readability, maintainability, test coverage |
-| Architecture | ≥ 0.85 | Design quality, SOLID, scalability |
-| Security | ≥ 0.85 | Vulnerability surface, threat model |
-| Completeness | ≥ 0.85 | Full PRD coverage, all features |
-| Novelty | ≥ 0.85 | Innovative approach vs rehashing |
-
-**Outcomes:**
-- ✅ **MASTERPIECE** (all ≥ 0.85, flaws < 5, improving ≥ 3 cycles) → SHIP + GITHUB
-- 🔄 **FLAWED** (any < 0.7 or flaws > 10) → LOOP AGAIN on weakest dimension
-- ⏹️ **CAN'T IMPROVE** (3+ cycles flat) → STOP + analysis report
-
-## 🔥 Hive Swarm (33→999 Agents)
-
-Start small (33), scale up based on findings volume:
-
-| Scale | Agents | When |
-|-------|--------|------|
-| Small | 33 | First cycle, small project |
-| Medium | 100 | After first 2 cycles |
-| Large | 400 | Complex projects |
-| Maximum | 999 | Full-stack blockchain, massive infrastructure |
+Phase 1 runs EXACTLY ONCE. Phase 2 and Phase 3 alternate (swap pattern) until the Mastery Gate passes.
 
 ## 🎯 YOLO Mode
 
-Auto-approve ALL tool calls. No permissions, no brakes, maximum velocity.
-Activate with: `YOLO=true` or pass `--yolo` in task description.
+Full auto-approve. No permissions, no brakes, maximum velocity.
+Saved permanently in config: `approvals.mode: yolo`, `agent.yolo: true`.
 
-## 🔄 Cross-Model Review (Inspired by ARIS)
+## 📊 Agent Counts
 
-**Core principle: "A loop can DRIVE, it cannot ACQUIT"**
+| Phase | Agents | Points |
+|-------|--------|--------|
+| Phase 0: PRD BUILD | 66 | build |
+| Phase 1: Development | 33 | architecture, setup, code_generation |
+| Phase 2: Hunting | 33 | bugs, arch_review, security |
+| Phase 3: Quality | 33 | audit, improve, review |
+| Simplicity | 33 | dead_code, occam, prd_alignment |
+| **Total** | **198** | **13 points** |
 
-- **Executor** (DeepSeek): checks execution completeness — "was the task finished?"
-- **Reviewer** (different model family — Claude/GPT/Gemini): checks quality and correctness
-- Breaks self-play blind spots: the same model reviewing its own work misses patterns
-
-## 📦 Project Structure
+## 🏗️ Project Structure
 
 ```
 hermes-swarm-loop/
-├── SKILL.md                        # v4.0.0 — the actual framework (this is THE framework)
-├── README.md                       # This file
-├── launch.sh                       # Legacy launcher (shell-based)
-├── archive/
-│   └── python-v2.0.0/              # Archived old Python-based version
-└── swarm_33_audit.sh               # Script: 33-agent AUDIT swarm example
+├── bootstrap.py          # 5-stage launcher (env→DB→phase→YOLO→launch)
+├── SKILL.md              # Canonical framework definition
+├── engine/               # Core state machines
+│   ├── state_machine.py  # SQLite-backed DB, phase/point/YOLO machines
+│   ├── mastery_gate.py   # 7-dim scoring & verdict
+│   └── ...
+├── scaling/              # Scaling layer (token bucket, circuit breaker, etc.)
+├── configs/              # YAML configuration
+├── tests/                # 375+ tests
+│   └── test_agent_roles.py
+│   └── test_state_machine.py
+│   └── ...
+└── arch/                 # Architecture documentation
+    ├── agent-roles.md
+    ├── architecture-overview.md
+    └── ...
 ```
 
-## 🔬 Eat Your Own Dogfood
+## 🤖 Clone → Tests → Go
 
-The framework improves itself. Run the 3-loop cycle on `/opt/hermes-swarm-loop/`:
+```bash
+git clone https://github.com/DominikKrawczyk/hermes-swarm-loop.git
+cd hermes-swarm-loop
+python3 -m pytest tests/    # 375 passed in 11s ✅
+```
 
-1. **Loop 1:** AUDIT the framework files → IMPROVE → REVIEW
-2. **Loop 2:** Hunt for bugs, architecture flaws, security issues in the framework
-3. **Loop 3:** Consolidate dead code, reduce operational complexity, align with PRD
-4. **Self-reflect:** Is the framework itself a masterpiece?
-5. **Push** improved framework to GitHub
-6. **Repeat**
+Zero setup, zero dependencies beyond Python 3.10+ and `pytest`.
 
-## 📊 Comparison: vs Original Ralph
+## 📋 Requirements
 
-| Feature | Ralph (snarktank) | Hermes Swarm Loop |
-|---------|-------------------|-------------------|
-| Loop structure | 1 task → implement → check → repeat | 3 loops × 3 points × 3 sub × N |
-| Points per iteration | 1 story | 9 (3 dev + 3 hunt + 3 simplicity) |
-| Multiplier | 1× | 3×3×3×N |
-| Parallel agents | 1 | Up to 999 |
-| Hunting | None | Bugs + Architecture + Security ×3 depths |
-| Simplicity audit | None | Dead code consolidation + Occam's Razor + PRD Alignment |
-| Review model | Self-review | Cross-model review (executor ≠ reviewer) |
-| Self-reflection | Pass/fail | 5-dimension masterpiece/flawed/cannot-improve |
-| YOLO | No | Yes |
-| Model agnostic | Claude/Amp | DeepSeek, Claude, GPT, Gemini, any |
+- Python 3.10+
+- `hermes` CLI installed
+- `gh` (GitHub CLI) authenticated for GitHub push
+- For Phase 0 web search: internet access
 
-## 🤖 Supported Models
+## 🔬 Dogfood
 
-Hermes supports any LLM provider. The framework works with:
-- DeepSeek V4 Flash / Pro
-- Claude (Sonnet 4, Opus 4)
-- GPT-5 / GPT-5.5
-- Gemini 3
-- Any other via Hermes provider config
+The framework improves itself. Run on `/root/code/hermes-swarm-loop/` for self-audit.
 
 ---
 
-**🐝 Get shit done. Iterate until masterpiece.**
+**🐝 Phase 0 (prd_build) → Phase 1 (development) → Phase 2 (hunting) → Phase 3 (quality). Get shit done. Iterate until masterpiece.**
