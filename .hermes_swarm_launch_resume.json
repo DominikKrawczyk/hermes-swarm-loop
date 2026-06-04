@@ -1,0 +1,11 @@
+{
+  "phase": "development",
+  "project_name": "UltraSales",
+  "project_desc": "Build unified Sales & Marketing OS at /opt/email-platform/. 12 modules: CMS, Email Inbox, Ad Suites, Social, Voice AI, Lead Scraper, CRM Kanban, BullGPT, Budget Engine. Read PRD.md and BUILD.md. Build on EXISTING code.",
+  "points": ["setup", "code_generation"],
+  "commands": [
+    "hermes kanban swarm --worker default:\"UltraSales — development — setup:kanban-worker\" --verifier default:skills:kanban-orchestrator --synthesizer default:skills:kanban-orchestrator --max-agents 22 2>&1",
+    "hermes kanban swarm --worker default:\"UltraSales — development — code_generation:kanban-worker\" --verifier default:skills:kanban-orchestrator --synthesizer default:skills:kanban-orchestrator --max-agents 22 2>&1"
+  ],
+  "max_agents": 22
+}

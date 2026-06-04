@@ -1,0 +1,75 @@
+#!/bin/bash
+# Phase 0 — 66 build agents for UltraSales
+cd /opt/email-platform
+
+hermes kanban swarm \
+  --verifier default \
+  --synthesizer default \
+  --worker "default:Build Agent 01:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 02:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 03:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 04:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 05:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 06:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 07:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 08:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 09:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 10:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 11:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 12:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 13:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 14:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 15:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 16:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 17:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 18:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 19:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 20:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 21:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 22:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 23:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 24:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 25:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 26:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 27:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 28:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 29:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 30:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 31:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 32:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 33:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 34:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 35:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 36:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 37:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 38:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 39:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 40:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 41:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 42:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 43:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 44:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 45:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 46:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 47:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 48:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 49:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 50:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 51:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 52:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 53:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 54:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 55:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 56:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 57:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 58:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 59:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 60:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 61:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 62:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 63:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 64:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 65:kanban-worker,hermes-swarm-loop" \
+  --worker "default:Build Agent 66:kanban-worker,hermes-swarm-loop" \
+  --json \
+  "Read /opt/email-platform/PRD.md as the base specification. Research each module: content CMS with labeling types, copywriting AI agent (DeepSeek V4), ad suites (Google Ads, YouTube Ads, X/TikTok/Meta social+ads), social media posting/reply/answering, ProtonMail unified inbox clone, BullGPT.io analytics one-pager clone, voice AI (ElevenLabs+VAPI+DeepSeek V4), web scraping lead generation (crawl/explore/keywords/emails), enterprise CRM kanban board (Pipedrive-style). Produce: expanded PRD.md, .prd/manifest.json, .prd/questions.md in /opt/email-platform/"
