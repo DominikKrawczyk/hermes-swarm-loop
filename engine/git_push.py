@@ -31,6 +31,39 @@ def run(cmd, timeout=30, cwd=None):
         return f"[ERROR {e}]", -1
 
 
+def _resolve_remote_auth(repo_path: str) -> str:
+    """Ensure remote URL has auth token embedded for non-interactive pushes."""
+    out, code = run("git remote get-url origin 2>/dev/null", timeout=5, cwd=str(repo_path))
+    if code != 0 or not out:
+        return ""
+    url = out.strip()
+    # Already has credentials
+    if "@" in url and "://" in url:
+        return url
+    # Try to get token from gh config
+    token = _get_gh_token()
+    if token and url.startswith("https://github.com/"):
+        auth_url = url.replace("https://github.com/", f"https://DominikKrawczyk:{token}@github.com/")
+        run(f'git remote set-url origin "{auth_url}" 2>/dev/null', timeout=5, cwd=str(repo_path))
+        return auth_url
+    return url
+
+
+def _get_gh_token() -> str | None:
+    """Extract oauth_token from gh hosts config."""
+    config_path = os.path.expanduser("~/.config/gh/hosts.yml")
+    if not os.path.exists(config_path):
+        return None
+    try:
+        with open(config_path) as f:
+            for line in f:
+                if "oauth_token:" in line:
+                    return line.split(":", 1)[1].strip()
+    except Exception:
+        return None
+    return None
+
+
 def git_push_repo(repo_path: str, message: str = "", remote: str = "origin", branch: str = "main") -> bool:
     """
     Push the repo at repo_path to GitHub.
@@ -40,6 +73,9 @@ def git_push_repo(repo_path: str, message: str = "", remote: str = "origin", bra
     if not (repo / ".git").exists():
         print(f"  No .git at {repo_path}")
         return False
+
+    # Resolve auth
+    _resolve_remote_auth(str(repo))
 
     # 1. Stage all changes
     out, code = run("git add -A", timeout=30, cwd=str(repo))
