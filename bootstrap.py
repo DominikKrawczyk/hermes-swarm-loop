@@ -126,7 +126,15 @@ def main():
                 f"Research before writing — don't guess API signatures."
             )
         extra = f" {web_note}" if web_note else ""
-        goal = f"Work on point '{pt}' of phase '{args.phase}' for project '{args.project_name}'. {args.project_desc}.{extra} {persistence_warning}"
+        safety = (
+            "CRITICAL — SAFETY: NEVER delete, remove, or overwrite existing files. "
+            "ONLY modify existing files or create NEW files. "
+            "Do NOT remove imports, models, routes, or workers — they may be used by other modules. "
+            "If you think a file is dead code, add a comment '# TODO: verify if still needed' "
+            "instead of deleting it. "
+            "BREAKING THIS RULE CORRUPTS THE PROJECT."
+        )
+        goal = f"Work on point '{pt}' of phase '{args.phase}' for project '{args.project_name}'. {args.project_desc}.{extra} {persistence_warning} {safety}"
         cmd = f"hermes kanban swarm {workers} --verifier {verifier} --synthesizer {synthesizer} \"{goal}\""
         commands.append(cmd)
     
