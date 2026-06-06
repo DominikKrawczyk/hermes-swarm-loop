@@ -121,9 +121,14 @@ def main():
         web_note = ""
         if args.websearch:
             web_note = (
-                "WEBSEARCH/TOOL ACCESS: You have web_search and terminal tools available. "
-                f"Use them to check official docs, APIs, frameworks, and best practices. "
-                f"Research before writing — don't guess API signatures."
+                "CRITICAL — WEBSEARCH REQUIRED: You MUST use web_search to research "
+                "official platform API docs before writing ANY code. "
+                "Look up the exact API endpoints, request/response schemas, authentication flows, "
+                "and rate limits from official documentation. "
+                "Do NOT guess API signatures, endpoints, or parameter names — they MUST be 120% correct. "
+                "Research: Google Ads API, Meta Graph API, TikTok Business API, X API v2, "
+                "YouTube Data API v3, IMAP RFCs, etc. "
+                "Use terminal to test API calls with curl after implementation."
             )
         extra = f" {web_note}" if web_note else ""
         safety = (
